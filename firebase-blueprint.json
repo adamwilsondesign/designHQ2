@@ -383,6 +383,356 @@
         "ownerUid",
         "title"
       ]
+    },
+    "ProposalTemplate": {
+      "title": "ProposalTemplate",
+      "description": "One of the four proposal variants (doc id = variant: commerce-eng, commerce-design, core-eng, core-design). The .docx lives in Storage under professional/templates/.",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "storagePath": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "uploadedAt": {
+          "type": "string"
+        },
+        "parseStatus": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "parsed",
+            "error"
+          ]
+        },
+        "parseError": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preamble": {
+          "type": "string"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer"
+              },
+              "heading": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "static",
+                  "variable"
+                ]
+              },
+              "key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "needsReview": {
+                "type": "boolean"
+              },
+              "confirmed": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "hasTable": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Proposal": {
+      "title": "Proposal",
+      "type": "object",
+      "properties": {
+        "clientName": {
+          "type": "string"
+        },
+        "templateId": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Adam's free-form engagement notes"
+        },
+        "transcripts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "new",
+            "draft"
+          ]
+        },
+        "draft": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "integer"
+            },
+            "sections": {
+              "type": "array"
+            },
+            "openQuestions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "generatedAt": {},
+            "generatedBy": {
+              "type": "string"
+            }
+          }
+        },
+        "reviewNotes": {
+          "type": "string"
+        },
+        "sectionNotes": {
+          "type": "object"
+        },
+        "history": {
+          "type": "array"
+        },
+        "docxPath": {
+          "type": "string"
+        },
+        "docxVersion": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        }
+      }
+    },
+    "Meeting": {
+      "title": "Meeting",
+      "description": "One occurrence of a one-on-one, town hall, critique or design team meeting.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "oneOnOne",
+            "townHall",
+            "critique",
+            "designTeam"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "description": "ISO start"
+        },
+        "durationMinutes": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "scheduled",
+            "held",
+            "cancelled"
+          ]
+        },
+        "staffId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "staffName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "seriesId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "presenters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "agenda": {
+          "type": "string"
+        },
+        "calendarEventId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "calendarLink": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transcriptPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transcriptName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "actionItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "owner": {
+                "type": "string"
+              },
+              "task": {
+                "type": "string"
+              },
+              "due": {
+                "type": "string"
+              },
+              "done": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "adamNotes": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        }
+      }
+    },
+    "MeetingSeries": {
+      "title": "MeetingSeries",
+      "description": "Recurring town hall, critique or design team meeting.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "townHall",
+            "critique",
+            "designTeam"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "cadenceWeeks": {
+          "type": "integer"
+        },
+        "leadTimeDays": {
+          "type": "integer"
+        },
+        "durationMinutes": {
+          "type": "integer"
+        },
+        "attendees": {
+          "type": "string"
+        },
+        "lastHeldDate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ExecUpdate": {
+      "title": "ExecUpdate",
+      "description": "Saved copy of a generated Slack exec update.",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "since": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "manual": {
+          "type": "object"
+        },
+        "includedClosed": {
+          "type": "array"
+        },
+        "includedScoped": {
+          "type": "array"
+        }
+      }
     }
   },
   "firestore": {
@@ -433,6 +783,36 @@
     },
     "/integrations/{uid}/...": {
       "description": "OAuth tokens. Server-only (Cloud Functions); clients are denied."
+    },
+    "/proposalTemplates/{variant}": {
+      "schema": {
+        "$ref": "#/entities/ProposalTemplate"
+      },
+      "description": "Admin+ only."
+    },
+    "/proposals/{proposalId}": {
+      "schema": {
+        "$ref": "#/entities/Proposal"
+      },
+      "description": "Admin+ only."
+    },
+    "/meetings/{meetingId}": {
+      "schema": {
+        "$ref": "#/entities/Meeting"
+      },
+      "description": "Admin+ only."
+    },
+    "/meetingSeries/{seriesId}": {
+      "schema": {
+        "$ref": "#/entities/MeetingSeries"
+      },
+      "description": "Admin+ only."
+    },
+    "/execUpdates/{id}": {
+      "schema": {
+        "$ref": "#/entities/ExecUpdate"
+      },
+      "description": "Admin+ only."
     }
   }
 }

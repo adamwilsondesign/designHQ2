@@ -16,7 +16,10 @@ import {
   Menu as MenuIcon,
   Hexagon,
   Bell,
-  CalendarDays
+  CalendarDays,
+  FileText,
+  MessagesSquare,
+  Megaphone
 } from 'lucide-react';
 import { 
   Box, 
@@ -79,6 +82,9 @@ export default function Layout({
     { id: 'allocation', label: 'Allocation', icon: CalendarDays },
     { id: 'projects', label: 'Projects', icon: FolderKanban },
     { id: 'revenue', label: 'Revenue', icon: DollarSign },
+    { id: 'proposals', label: 'Proposals', icon: FileText },
+    { id: 'meetings', label: 'Meetings', icon: MessagesSquare },
+    { id: 'execUpdate', label: 'Exec Update', icon: Megaphone },
     { id: 'admin', label: 'Admin', icon: Settings },
   ];
 

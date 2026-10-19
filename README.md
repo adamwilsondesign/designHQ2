@@ -44,6 +44,20 @@ Enforced in `firestore.rules` and `storage.rules`; `src/lib/roles.ts` mirrors th
 
 Department numbers (revenue, profitability, pipeline, utilisation, pace) come from `src/lib/metrics.ts`. That logic is the Dashboard's original code, moved verbatim; `src/lib/metrics.test.ts` runs the original code side by side and fails on any drift.
 
+## Cloud Functions (`functions/`)
+
+Server-side work: AI drafting (Gemini via `@google/genai`, already a project dependency), docx template parsing and rendering, transcript extraction (PDF/DOCX/TXT), and Google Calendar OAuth. Every callable re-checks the caller's role, because the Admin SDK bypasses security rules.
+
+```bash
+cd functions && npm install
+cp .env.example .env.<new-project-id>   # GEMINI_MODEL, GOOGLE_OAUTH_CLIENT_ID, redirect URI, APP_URL
+npx firebase functions:secrets:set GEMINI_API_KEY --project rebuild
+npx firebase functions:secrets:set GOOGLE_OAUTH_CLIENT_SECRET --project rebuild
+npx firebase functions:secrets:set OAUTH_STATE_SECRET --project rebuild   # any long random string
+```
+
+Google Calendar needs an OAuth client (type "Web application") in the new project, with the deployed `googleOAuthCallback` URL as an authorised redirect URI and the Calendar API enabled. Refresh tokens are stored in `integrations/{uid}/googleAccounts/{lazer|polyform|personal}`, which no client can read.
+
 ## Migration (one-time)
 
 ```bash
@@ -62,6 +76,7 @@ Exports land in `migration-export/` (git-ignored; they contain staff and client 
 ```bash
 npm test            # metrics parity + migration transform
 npm run test:rules  # security rules against the Firestore/Storage emulators (needs Java)
+npm run test:functions  # docx parsing/rendering + section classification
 npm run lint        # tsc --noEmit
 ```
 

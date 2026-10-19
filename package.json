@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-designhq \"vitest run --config vitest.rules.config.ts\"",
     "migrate:export": "tsx scripts/migrate/export.ts",
-    "migrate:import": "tsx scripts/migrate/import.ts"
+    "migrate:import": "tsx scripts/migrate/import.ts",
+    "test:functions": "npm --prefix functions test"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

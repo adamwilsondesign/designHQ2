@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { User, StaffMember } from '../../lib/mockData';
-import { Plus, Edit2, Users as UsersIcon, MapPin, Clock, ArrowUpDown, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Users as UsersIcon, MapPin, Clock, ArrowUpDown, ArrowUp, ArrowDown, Trash2, IdCard } from 'lucide-react';
+import StaffDetailsPanel from '../../modules/staffData/components/StaffDetailsPanel';
+import { useStaffProfiles } from '../../modules/staffData/hooks/useStaffProfiles';
 import AddStaffWizard from '../wizards/AddStaffWizard';
 import { formatUSD } from '../../lib/utils';
 import { motion } from 'motion/react';
@@ -38,6 +40,8 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [detailsStaff, setDetailsStaff] = useState<StaffMember | null>(null);
+  const staffProfiles = useStaffProfiles();
 
   const canEdit = user.role === 'Super Admin' || user.role === 'Admin';
   const canViewCost = user.role === 'Super Admin' || user.role === 'Admin';
@@ -205,6 +209,9 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
                         </Stack>
                         {canEdit && (
                           <Stack direction="row" spacing={1}>
+                            <IconButton size="small" aria-label="Staff details" sx={{ borderRadius: 2, bgcolor: 'action.hover' }} onClick={() => setDetailsStaff(staff)}>
+                              <IdCard size={16} />
+                            </IconButton>
                             <IconButton size="small" sx={{ borderRadius: 2, bgcolor: 'action.hover' }} onClick={() => handleEditClick(staff)}>
                               <Edit2 size={16} />
                             </IconButton>
@@ -370,6 +377,9 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
                         {canEdit && (
                           <TableCell align="right">
                             <Stack direction="row" spacing={1} justifyContent="flex-end">
+                              <IconButton size="small" aria-label="Staff details" title="Birthday, join date, PTO, holidays, 1:1 cadence" sx={{ borderRadius: 2 }} onClick={() => setDetailsStaff(staff)}>
+                                <IdCard size={16} />
+                              </IconButton>
                               <IconButton size="small" sx={{ borderRadius: 2 }} onClick={() => handleEditClick(staff)}>
                                 <Edit2 size={16} />
                               </IconButton>
@@ -394,6 +404,13 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
         onClose={handleCloseWizard} 
         onSave={handleSaveStaff}
         initialData={editingStaff}
+      />
+
+      <StaffDetailsPanel
+        open={!!detailsStaff}
+        onClose={() => setDetailsStaff(null)}
+        staff={detailsStaff}
+        profile={detailsStaff ? staffProfiles.get(detailsStaff.id) : null}
       />
     </Box>
   );

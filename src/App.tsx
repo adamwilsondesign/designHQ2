@@ -10,6 +10,10 @@ import { db, handleFirestoreError, OperationType } from './lib/firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocFromServer, query, where } from 'firebase/firestore';
 import { canAccess, isProfessional, ModuleId } from './lib/roles';
 import MyAssignments from './modules/assignments/components/MyAssignments';
+import DailyDashboard from './modules/dashboardHome/components/DailyDashboard';
+import ProposalsView from './modules/proposals/components/ProposalsView';
+import MeetingsView from './modules/meetings/components/MeetingsView';
+import ExecUpdateView from './modules/execUpdate/components/ExecUpdateView';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import Dashboard from './components/views/Dashboard';
@@ -23,13 +27,20 @@ import DailyCheckIn from './components/DailyCheckIn';
 import AddStaffWizard from './components/wizards/AddStaffWizard';
 import AddSaleWizard from './components/wizards/AddSaleWizard';
 import AddProjectWizard from './components/wizards/AddProjectWizard';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, Alert } from '@mui/material';
 import { lightTheme, darkTheme } from './lib/theme';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState('dashboard');
+  // Google OAuth redirects back with ?google=connected:<account> or ?google=error:<reason>.
+  const [googleNotice] = useState(() => new URLSearchParams(window.location.search).get('google'));
+  useEffect(() => {
+    if (!googleNotice) return;
+    window.history.replaceState(null, '', window.location.pathname);
+    setCurrentView('meetings');
+  }, [googleNotice]);
   const [loading, setLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -327,13 +338,17 @@ export default function App() {
       return <MyAssignments user={user} staffList={staffList} projectsList={projectsList} />;
     }
     switch (view) {
-      case 'dashboard': return <Dashboard user={user} staffList={staffList} projectsList={projectsList} salesList={salesList} />;
+      case 'dashboard': return <DailyDashboard user={user} userId={userId} staffList={staffList} projectsList={projectsList} salesList={salesList} onNavigate={setCurrentView} />;
+      case 'overview': return <Dashboard user={user} staffList={staffList} projectsList={projectsList} salesList={salesList} />;
+      case 'proposals': return <ProposalsView />;
+      case 'meetings': return <MeetingsView staffList={staffList} />;
+      case 'execUpdate': return <ExecUpdateView staffList={staffList} projectsList={projectsList} salesList={salesList} />;
       case 'staff': return <Staff user={user} staffList={staffList} setStaffList={handleSetStaffList} />;
       case 'allocation': return <Allocation user={user} staffList={staffList} projectsList={projectsList} />;
       case 'projects': return <Projects user={user} projectsList={projectsList} setProjectsList={handleSetProjectsList} staffList={staffList} />;
       case 'revenue': return <Revenue user={user} salesList={salesList} setSalesList={handleSetSalesList} projectsList={projectsList} setProjectsList={handleSetProjectsList} />;
       case 'admin': return <Admin user={user} staffList={staffList} />;
-      default: return <Dashboard user={user} staffList={staffList} projectsList={projectsList} salesList={salesList} />;
+      default: return <DailyDashboard user={user} userId={userId} staffList={staffList} projectsList={projectsList} salesList={salesList} onNavigate={setCurrentView} />;
     }
   };
 
@@ -349,6 +364,13 @@ export default function App() {
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
       >
+        {googleNotice && (
+          <Alert severity={googleNotice.startsWith('connected') ? 'success' : 'error'} sx={{ mx: { xs: 2, md: 3 }, mt: 2 }}>
+            {googleNotice.startsWith('connected')
+              ? `Google ${googleNotice.split(':')[1]} calendar connected.`
+              : `Google connection failed (${googleNotice.split(':')[1] || 'unknown error'}).`}
+          </Alert>
+        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentView}

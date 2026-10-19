@@ -10,3 +10,5 @@ functions/lib/
 functions/node_modules/
 migration-export/
 .firebase/
+.secret.local
+*.secret.local
