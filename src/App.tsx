@@ -7,7 +7,9 @@ import React, { useState, useEffect } from 'react';
 import { User, StaffMember, Project, Sale } from './lib/mockData';
 import { subscribeToAuthChanges } from './lib/auth';
 import { db, handleFirestoreError, OperationType } from './lib/firebase';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocFromServer, query, where } from 'firebase/firestore';
+import { canAccess, isProfessional, ModuleId } from './lib/roles';
+import MyAssignments from './modules/assignments/components/MyAssignments';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import Dashboard from './components/views/Dashboard';
@@ -93,6 +95,31 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady || !user) return;
 
+    // Regular users may only read their own staff record and the projects they
+    // are assigned to (enforced in firestore.rules), so they get scoped listeners.
+    if (!isProfessional(user.role)) {
+      setSalesList([]);
+      if (!user.staffId) {
+        setStaffList([]);
+        setProjectsList([]);
+        return;
+      }
+      const unsubMe = onSnapshot(doc(db, 'staff', user.staffId), (snap) => {
+        setStaffList(snap.exists() ? [{ id: snap.id, ...snap.data() } as StaffMember] : []);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, `staff/${user.staffId}`);
+      });
+      const unsubMine = onSnapshot(query(collection(db, 'projects'), where('assignedStaffIds', 'array-contains', user.staffId)), (snapshot) => {
+        setProjectsList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)));
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'projects');
+      });
+      return () => {
+        unsubMe();
+        unsubMine();
+      };
+    }
+
     const unsubStaff = onSnapshot(collection(db, 'staff'), (snapshot) => {
       setStaffList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StaffMember)));
     }, (error) => {
@@ -116,7 +143,7 @@ export default function App() {
       unsubProjects();
       unsubSales();
     };
-  }, [isAuthReady, user]);
+  }, [isAuthReady, user?.role, user?.staffId]);
 
   const handleSetStaffList = async (action: StaffMember[] | ((prev: StaffMember[]) => StaffMember[])) => {
     const resolvedList = typeof action === 'function' ? action(staffList) : action;
@@ -295,13 +322,17 @@ export default function App() {
   }
 
   const renderView = () => {
-    switch (currentView) {
+    const view = canAccess(user.role, currentView as ModuleId) ? currentView : 'dashboard';
+    if (!isProfessional(user.role)) {
+      return <MyAssignments user={user} staffList={staffList} projectsList={projectsList} />;
+    }
+    switch (view) {
       case 'dashboard': return <Dashboard user={user} staffList={staffList} projectsList={projectsList} salesList={salesList} />;
       case 'staff': return <Staff user={user} staffList={staffList} setStaffList={handleSetStaffList} />;
       case 'allocation': return <Allocation user={user} staffList={staffList} projectsList={projectsList} />;
       case 'projects': return <Projects user={user} projectsList={projectsList} setProjectsList={handleSetProjectsList} staffList={staffList} />;
       case 'revenue': return <Revenue user={user} salesList={salesList} setSalesList={handleSetSalesList} projectsList={projectsList} setProjectsList={handleSetProjectsList} />;
-      case 'admin': return <Admin user={user} />;
+      case 'admin': return <Admin user={user} staffList={staffList} />;
       default: return <Dashboard user={user} staffList={staffList} projectsList={projectsList} salesList={salesList} />;
     }
   };

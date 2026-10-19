@@ -3,7 +3,7 @@ import { User, Project, StaffMember, Sale } from '../../lib/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { formatUSD } from '../../lib/utils';
 import { motion } from 'motion/react';
-import { calculateWeeklyTrends } from '../../lib/trends';
+import { computeDashboardMetrics, getFiscalYearStart, getProjectCost as getProjectCostForStaff, parseLocalDate } from '../../lib/metrics';
 import { 
   Box, 
   Grid, 
@@ -30,144 +30,32 @@ export default function Dashboard({ user, staffList, projectsList, salesList }: 
   const theme = useTheme();
   const canViewFinancials = user.role === 'Super Admin' || user.role === 'Admin';
 
-  const fiscalYearStart = new Date('2026-02-01T00:00:00');
-
-  // Filter out any data from before Feb 2026 for fiscal year
-  const fyProjectsList = projectsList.filter(p => {
-    if (!p.finishDate) return true;
-    return new Date(p.finishDate) >= fiscalYearStart;
-  });
-
-  const fySalesList = salesList.filter(s => {
-    if (!s.lastContactDate) return true;
-    return new Date(s.lastContactDate) >= fiscalYearStart;
-  });
-
-  const getProjectCost = (project: Project) => {
-    if (!project.assignedStaffIds || project.assignedStaffIds.length === 0) return 0;
-    const assignedStaff = staffList.filter(s => project.assignedStaffIds.includes(s.id));
-    if (assignedStaff.length === 0) return 0;
-    
-    let totalCost = 0;
-
-    if (project.totalHours > 0) {
-      // Distribute totalHours based on staff allocations
-      const totalAllocation = assignedStaff.reduce((sum, s) => sum + (project.staffAllocations?.[s.id] ?? 100), 0);
-      
-      if (totalAllocation > 0) {
-        assignedStaff.forEach(s => {
-          const allocation = project.staffAllocations?.[s.id] ?? 100;
-          const proportion = allocation / totalAllocation;
-          const hoursWorked = project.totalHours * proportion;
-          totalCost += hoursWorked * s.hourlyCost;
-        });
-        return totalCost;
-      }
-    }
-
-    if (!project.startDate || !project.finishDate) {
-      const avgHourlyRate = assignedStaff.reduce((sum, s) => sum + s.hourlyCost, 0) / assignedStaff.length;
-      return avgHourlyRate * project.totalHours;
-    }
-
-    const pStart = new Date(project.startDate);
-    const pEnd = new Date(project.finishDate);
-    const durationWeeks = Math.max(1, (pEnd.getTime() - pStart.getTime()) / (1000 * 60 * 60 * 24 * 7));
-
-    assignedStaff.forEach(s => {
-      const allocation = project.staffAllocations?.[s.id] ?? 100;
-      const hoursPerWeek = (allocation / 100) * 40;
-      totalCost += hoursPerWeek * durationWeeks * s.hourlyCost;
-    });
-
-    return totalCost;
-  };
-
-  // Calculate dynamic KPIs
-  const totalValue = fyProjectsList.reduce((sum, p) => sum + p.totalValue, 0);
-  const totalCost = fyProjectsList.reduce((sum, p) => sum + getProjectCost(p), 0);
-  const totalProfit = totalValue - totalCost;
-  const avgProfitability = totalValue > 0 ? (totalProfit / totalValue) * 100 : 0;
-  
+  const fiscalYearStart = getFiscalYearStart();
   const now = new Date();
-  const parseLocalDate = (dateString: string) => {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
 
-  const activeProjectsCount = fyProjectsList.filter(p => {
-    if (!p.startDate || !p.finishDate) return false;
-    const start = parseLocalDate(p.startDate);
-    const end = parseLocalDate(p.finishDate);
-    // End date is inclusive, so we set it to end of day
-    end.setHours(23, 59, 59, 999);
-    return start <= now && end >= now;
-  }).length;
-  
-  const totalDesigners = staffList.length;
-  const pipelineValue = fySalesList.filter(s => s.status === 'Open' || s.status === 'In Negotiation').reduce((sum, s) => sum + s.projectedValue, 0);
+  // All department numbers come from lib/metrics so every view stays identical.
+  const {
+    fyProjectsList,
+    fySalesList,
+    totalValue,
+    totalProfit,
+    avgProfitability,
+    activeProjectsCount,
+    totalDesigners,
+    pipelineValue,
+    projectsKickedOffThisMonth,
+    projectsProjectedToCloseThisMonth,
+    optimisticCloseValue,
+    trends,
+    benchBurn,
+    netProfit,
+    goalProgress,
+    timeProgress,
+    monthlyPacePercentage,
+    ftesOnBench,
+  } = computeDashboardMetrics(projectsList, salesList, staffList, now);
 
-  // New Sub-callout Calculations
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-
-  const projectsKickedOffThisMonth = fyProjectsList.filter(p => {
-    if (!p.startDate) return false;
-    const startDate = parseLocalDate(p.startDate);
-    return startDate.getMonth() === currentMonth && startDate.getFullYear() === currentYear;
-  }).length;
-
-  const activeSales = fySalesList.filter(s => s.status === 'Open' || s.status === 'In Negotiation');
-  const projectsProjectedToCloseThisMonth = Math.round(activeSales.length * 0.33);
-  const optimisticCloseValue = pipelineValue * 0.33;
-
-  const trends = useMemo(() => calculateWeeklyTrends(fyProjectsList, staffList), [fyProjectsList, staffList]);
-
-  const benchBurn = trends?.benchBurn || 0;
-  const netProfit = totalProfit - benchBurn;
-
-  const revenueGoal = 5000000;
-  const goalProgress = (totalValue / revenueGoal) * 100;
-
-  // Timeline and Monthly Pace Calculations
-  const fyStart = new Date(2026, 1, 1); // Feb 1, 2026
-  const fyEnd = new Date(2027, 0, 31); // Jan 31, 2027
-  const totalFyDays = (fyEnd.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
-  const elapsedFyDays = (now.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
-  const timeProgress = Math.min(Math.max((elapsedFyDays / totalFyDays) * 100, 0), 100);
-  
-  const monthlyRevenueGoal = revenueGoal / 12;
-  const monthsElapsed = elapsedFyDays / (365.25 / 12);
-  const currentMonthlyPace = totalValue / Math.max(monthsElapsed, 1);
-  const monthlyPacePercentage = (currentMonthlyPace / monthlyRevenueGoal) * 100;
-
-  // FTEs on Bench Calculation
-  const currentActiveProjects = fyProjectsList.filter(p => {
-    if (!p.startDate || !p.finishDate) return false;
-    const start = parseLocalDate(p.startDate);
-    const end = parseLocalDate(p.finishDate);
-    end.setHours(23, 59, 59, 999);
-    return start <= now && end >= now;
-  });
-
-  const fullTimeStaff = staffList.filter(s => s.employmentType === 'Full-Time');
-  const fullTimeStaffIds = new Set(fullTimeStaff.map(s => s.id));
-
-  let totalAllocatedPercentage = 0;
-  currentActiveProjects.forEach(p => {
-    if (p.assignedStaffIds) {
-      p.assignedStaffIds.forEach(staffId => {
-        if (fullTimeStaffIds.has(staffId)) {
-          const allocation = p.staffAllocations?.[staffId] ?? 100;
-          totalAllocatedPercentage += allocation;
-        }
-      });
-    }
-  });
-
-  const totalFTEs = fullTimeStaff.length;
-  const allocatedFTEs = totalAllocatedPercentage / 100;
-  const ftesOnBench = Math.max(0, totalFTEs - allocatedFTEs);
+  const getProjectCost = (project: Project) => getProjectCostForStaff(project, staffList);
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
 

@@ -1,8 +1,162 @@
 rules_version = '2';
+
+// DesignHQ rebuild security rules.
+//
+// These rules are for the NEW Firebase project only. The legacy DesignHQ project
+// (gen-lang-client-0470160406, named database ai-studio-77429012-...) keeps its
+// own open rules and must not receive this file. firebase.json deploys rules to
+// the (default) database of whichever project is selected, and
+// scripts/guard-deploy.mjs refuses to run against the legacy project id.
+//
+// Roles live on /users/{uid}.role:
+//   'Super Admin'  full access, including personal modules (/personal/{uid})
+//   'Admin'        all professional collections, no personal modules
+//   'Regular User' their own user doc, their own staff record, projects they
+//                  are assigned to (via users/{uid}.staffId) and their own tasks
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    function signedIn() {
+      return request.auth != null;
     }
+
+    function lazerAccount() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('.*@lazertechnologies[.]com$');
+    }
+
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function isAdamEmail() {
+      return lazerAccount() && myEmail() == 'adamwilson@lazertechnologies.com';
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function hasProfile() {
+      return signedIn() && exists(userPath(request.auth.uid));
+    }
+
+    function myRole() {
+      return get(userPath(request.auth.uid)).data.role;
+    }
+
+    function myStaffId() {
+      return get(userPath(request.auth.uid)).data.get('staffId', '');
+    }
+
+    function isMember() {
+      return lazerAccount() && hasProfile();
+    }
+
+    function isSuperAdmin() {
+      return isMember() && myRole() == 'Super Admin';
+    }
+
+    // Professional access: Admin and Super Admin.
+    function isAdmin() {
+      return isMember() && myRole() in ['Super Admin', 'Admin'];
+    }
+
+    function validRole(r) {
+      return r in ['Super Admin', 'Admin', 'Regular User'];
+    }
+
+    // ---------- users ----------
+    // Docs are keyed by auth uid. Super Admins may also pre-create a doc keyed by
+    // lower-cased email; lib/auth.ts copies its role on first sign-in and then
+    // deletes it.
+    match /users/{userId} {
+      function preCreated() {
+        return /databases/$(database)/documents/users/$(myEmail());
+      }
+
+      // Role a user may give themselves on first sign-in.
+      function allowedSelfRole(r) {
+        return r == 'Regular User'
+          || (isAdamEmail() && r == 'Super Admin')
+          || (exists(preCreated()) && r == get(preCreated()).data.role);
+      }
+
+      allow get: if isSuperAdmin()
+        || (signedIn() && userId == request.auth.uid)
+        || (lazerAccount() && userId == myEmail());
+      allow list: if isSuperAdmin();
+
+      allow create: if (isSuperAdmin() && validRole(request.resource.data.role))
+        || (lazerAccount()
+            && userId == request.auth.uid
+            && request.resource.data.email == myEmail()
+            && allowedSelfRole(request.resource.data.role)
+            && !request.resource.data.keys().hasAny(['staffId']));
+
+      // Users can edit their own name/avatar but never their role or staff link,
+      // except Adam's self-promotion to Super Admin that lib/auth.ts performs.
+      allow update: if isSuperAdmin()
+        || (lazerAccount()
+            && userId == request.auth.uid
+            && request.resource.data.email == resource.data.email
+            && request.resource.data.get('staffId', '') == resource.data.get('staffId', '')
+            && (request.resource.data.role == resource.data.role
+                || (isAdamEmail() && request.resource.data.role == 'Super Admin')));
+
+      // A user may consume their own pre-created invite doc.
+      allow delete: if isSuperAdmin() || (lazerAccount() && userId == myEmail());
+    }
+
+    // ---------- core professional data (existing collections) ----------
+    match /staff/{staffId} {
+      allow read: if isAdmin() || (isMember() && staffId == myStaffId());
+      allow write: if isAdmin();
+    }
+
+    match /projects/{projectId} {
+      allow read: if isAdmin()
+        || (isMember() && myStaffId() != '' && myStaffId() in resource.data.assignedStaffIds);
+      allow write: if isAdmin();
+    }
+
+    match /sales/{saleId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ---------- extended professional data (new collections) ----------
+    // staffProfiles/{staffId}: birthday, join date, PTO, holidays, 1:1 cadence.
+    // projectMeta/{projectId}: health status and other fields the existing
+    // project writer would otherwise overwrite.
+    match /staffProfiles/{staffId} { allow read, write: if isAdmin(); }
+    match /projectMeta/{projectId} { allow read, write: if isAdmin(); }
+    match /proposalTemplates/{id} { allow read, write: if isAdmin(); }
+    match /proposals/{id} { allow read, write: if isAdmin(); }
+    match /meetings/{id} { allow read, write: if isAdmin(); }
+    match /meetingSeries/{id} { allow read, write: if isAdmin(); }
+    match /execUpdates/{id} { allow read, write: if isAdmin(); }
+    match /settings/{id} { allow read, write: if isAdmin(); }
+
+    // ---------- tasks (any signed-in member, own tasks only) ----------
+    match /tasks/{taskId} {
+      allow read, update, delete: if isMember() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isMember() && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---------- personal modules (Super Admin, own data only) ----------
+    // Social drafts, calendar reminders, job applications, resume drafts and the
+    // personal profile hub all live under /personal/{uid}/...
+    match /personal/{uid}/{document=**} {
+      allow read, write: if isSuperAdmin() && request.auth.uid == uid;
+    }
+
+    // ---------- server-only ----------
+    // OAuth refresh tokens etc. Only Cloud Functions (Admin SDK) touch these.
+    match /integrations/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Everything else (including the legacy 'test/connection' probe) is denied.
   }
 }

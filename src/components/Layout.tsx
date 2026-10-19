@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '../lib/mockData';
 import { logout } from '../lib/auth';
+import { canAccess, ModuleId } from '../lib/roles';
 import ProfileEditDialog from './ProfileEditDialog';
 import { 
   LayoutDashboard, 
@@ -72,16 +73,16 @@ export default function Layout({
     onLogout();
   };
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Super Admin', 'Admin', 'Regular User'] },
-    { id: 'staff', label: 'Staff', icon: Users, roles: ['Super Admin', 'Admin', 'Regular User'] },
-    { id: 'allocation', label: 'Allocation', icon: CalendarDays, roles: ['Super Admin', 'Admin', 'Regular User'] },
-    { id: 'projects', label: 'Projects', icon: FolderKanban, roles: ['Super Admin', 'Admin', 'Regular User'] },
-    { id: 'revenue', label: 'Revenue', icon: DollarSign, roles: ['Super Admin', 'Admin'] },
-    { id: 'admin', label: 'Admin', icon: Settings, roles: ['Super Admin'] },
+  const navItems: { id: ModuleId, label: string, icon: typeof LayoutDashboard }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'staff', label: 'Staff', icon: Users },
+    { id: 'allocation', label: 'Allocation', icon: CalendarDays },
+    { id: 'projects', label: 'Projects', icon: FolderKanban },
+    { id: 'revenue', label: 'Revenue', icon: DollarSign },
+    { id: 'admin', label: 'Admin', icon: Settings },
   ];
 
-  const visibleNavItems = navItems.filter(item => item.roles.includes(user.role));
+  const visibleNavItems = navItems.filter(item => canAccess(user.role, item.id));
 
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>

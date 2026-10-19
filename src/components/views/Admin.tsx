@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Role } from '../../lib/mockData';
+import { User, Role, StaffMember } from '../../lib/mockData';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { 
@@ -31,7 +31,7 @@ import {
 } from '@mui/material';
 import { ShieldAlert, Save, UserCog, CheckCircle2, Plus } from 'lucide-react';
 
-export default function Admin({ user }: { user: User }) {
+export default function Admin({ user, staffList = [] }: { user: User, staffList?: StaffMember[] }) {
   const theme = useTheme();
   const [users, setUsers] = useState<(User & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +57,19 @@ export default function Admin({ user }: { user: User }) {
     setSaving(userId);
     try {
       await updateDoc(doc(db, 'users', userId), { role: newRole });
+      setSuccess(userId);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleLinkStaff = async (userId: string, staffId: string) => {
+    setSaving(userId);
+    try {
+      await updateDoc(doc(db, 'users', userId), { staffId });
       setSuccess(userId);
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
@@ -167,6 +180,7 @@ export default function Admin({ user }: { user: User }) {
                   <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Linked staff record</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -199,6 +213,21 @@ export default function Admin({ user }: { user: User }) {
                         <MenuItem value="Regular User">Regular User</MenuItem>
                       </Select>
                     </TableCell>
+                    <TableCell>
+                      <Select
+                        size="small"
+                        displayEmpty
+                        value={u.staffId || ''}
+                        onChange={(e) => handleLinkStaff(u.id, e.target.value as string)}
+                        disabled={saving === u.id}
+                        sx={{ minWidth: 180, borderRadius: 2, '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' } }}
+                      >
+                        <MenuItem value=""><em>Not linked</em></MenuItem>
+                        {staffList.map(s => (
+                          <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </TableCell>
                     <TableCell align="right">
                       {success === u.id ? (
                         <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" sx={{ color: 'success.main' }}>
@@ -223,9 +252,9 @@ export default function Admin({ user }: { user: User }) {
         <Alert severity="info" sx={{ borderRadius: 3 }}>
           <AlertTitle sx={{ fontWeight: 700 }}>Role Permissions</AlertTitle>
           <Typography variant="body2">
-            <strong>Super Admin:</strong> Full access to all features and system settings.<br />
-            <strong>Admin:</strong> Access to all features except system settings.<br />
-            <strong>Regular User:</strong> Limited access to dashboard and personal assignments.
+            <strong>Super Admin:</strong> Full access, including personal modules and system settings.<br />
+            <strong>Admin:</strong> All professional modules. No personal modules and no system settings.<br />
+            <strong>Regular User:</strong> Dashboard and their own assignments only. Link them to a staff record above so their assignments show up.
           </Typography>
         </Alert>
       </Box>

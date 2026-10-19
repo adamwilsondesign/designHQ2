@@ -5,6 +5,9 @@ export interface User {
   name: string;
   role: Role;
   avatar: string;
+  // Links a sign-in to a staff record so Regular Users can see their own
+  // assignments. Set by a Super Admin (Admin view) or the migration script.
+  staffId?: string;
 }
 
 export const MOCK_USERS: Record<string, User> = {

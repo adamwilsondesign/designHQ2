@@ -1,20 +1,73 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Lazer Design HQ
 
-# Run and deploy your AI Studio app
+Internal operations tool for the Lazer design department: staff, allocation, projects, revenue pipeline, proposals, meetings, exec updates, and Adam's personal modules.
 
-This contains everything you need to run your app locally.
+Vite + React + TypeScript on Firebase (Auth, Firestore, Storage, Cloud Functions).
 
-View your app in AI Studio: https://ai.studio/apps/77429012-9dc4-4bc1-ad39-062d0c5150ba
+## Two deployments, side by side
 
-## Run Locally
+| | Legacy (production fallback) | Rebuild (this branch) |
+| --- | --- | --- |
+| Firebase project | `gen-lang-client-0470160406` | a **new** project you create |
+| Firestore database | named DB `ai-studio-77429012-…` | `(default)` |
+| Web config | `firebase-applet-config.json` | `VITE_FIREBASE_*` in `.env.local` |
+| Security rules | open (unchanged, not managed here) | `firestore.rules`, `storage.rules` |
 
-**Prerequisites:**  Node.js
+Nothing in this repo writes to or deploys to the legacy project:
 
+- `scripts/guard-deploy.mjs` runs before every Firebase deploy step and aborts if the target is the legacy project.
+- `firebase.json` deploys rules to the `(default)` database; legacy data lives in a named database.
+- The web app refuses to start unless `VITE_FIREBASE_TARGET` is set, and refuses `rebuild` if it points at the legacy project id.
+- `npm run migrate:import` refuses the legacy project id, is a dry run unless `--commit`, and never overwrites an existing document.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Local setup
+
+```bash
+npm install
+cp .env.example .env.local   # fill in the new project's web config
+npm run dev
+```
+
+## Roles
+
+| Role | Who | Access |
+| --- | --- | --- |
+| Super Admin | Adam | Everything, including personal modules (`/personal/{uid}`) |
+| Admin | Louie | All professional modules. No personal modules, no system settings |
+| Regular User | everyone else | Dashboard and their own assignments (needs a linked staff record) |
+
+Enforced in `firestore.rules` and `storage.rules`; `src/lib/roles.ts` mirrors the matrix for navigation. Adam's account is promoted to Super Admin on sign-in. Give Louie Admin by pre-creating the user in Admin → User Management with role Admin before their first sign-in (or changing the role after).
+
+## Data model
+
+`firebase-blueprint.json` documents every collection. Legacy collections (`users`, `staff`, `projects`, `sales`) keep their shape so the original views compute identical numbers. Extended fields go into companion collections keyed by the same id (`staffProfiles`, `projectMeta`) because the existing save handlers in `App.tsx` overwrite whole documents.
+
+Department numbers (revenue, profitability, pipeline, utilisation, pace) come from `src/lib/metrics.ts`. That logic is the Dashboard's original code, moved verbatim; `src/lib/metrics.test.ts` runs the original code side by side and fails on any drift.
+
+## Migration (one-time)
+
+```bash
+# 1. Export everything from legacy (read-only)
+GOOGLE_APPLICATION_CREDENTIALS=legacy-sa.json npm run migrate:export
+# 2. Dry run into the new project, review the report
+GOOGLE_APPLICATION_CREDENTIALS=rebuild-sa.json npm run migrate:import -- --in migration-export/<stamp>/export.json --project <new-project-id>
+# 3. Write it
+GOOGLE_APPLICATION_CREDENTIALS=rebuild-sa.json npm run migrate:import -- --in migration-export/<stamp>/export.json --project <new-project-id> --commit
+```
+
+Exports land in `migration-export/` (git-ignored; they contain staff and client data).
+
+## Tests
+
+```bash
+npm test            # metrics parity + migration transform
+npm run test:rules  # security rules against the Firestore/Storage emulators (needs Java)
+npm run lint        # tsc --noEmit
+```
+
+## Deploy (rebuild only)
+
+```bash
+npx firebase use --add          # pick the NEW project, alias it "rebuild"
+npx firebase deploy --project rebuild
+```

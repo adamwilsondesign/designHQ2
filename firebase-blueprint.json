@@ -16,15 +16,27 @@
         },
         "role": {
           "type": "string",
-          "enum": ["Super Admin", "Admin", "Regular User"],
+          "enum": [
+            "Super Admin",
+            "Admin",
+            "Regular User"
+          ],
           "description": "User's role"
         },
         "avatar": {
           "type": "string",
           "description": "URL to user's avatar"
+        },
+        "staffId": {
+          "type": "string",
+          "description": "Staff record this sign-in belongs to. Lets Regular Users see their own assignments. Set by a Super Admin or the migration script."
         }
       },
-      "required": ["email", "name", "role"]
+      "required": [
+        "email",
+        "name",
+        "role"
+      ]
     },
     "StaffMember": {
       "title": "StaffMember",
@@ -69,7 +81,14 @@
           "description": "List of skills"
         }
       },
-      "required": ["name", "location", "timezone", "employmentType", "hourlyCost", "skills"]
+      "required": [
+        "name",
+        "location",
+        "timezone",
+        "employmentType",
+        "hourlyCost",
+        "skills"
+      ]
     },
     "Project": {
       "title": "Project",
@@ -94,7 +113,11 @@
         },
         "status": {
           "type": "string",
-          "enum": ["Open", "Closed", "Lost"],
+          "enum": [
+            "Open",
+            "Closed",
+            "Lost"
+          ],
           "description": "Project status"
         },
         "totalHours": {
@@ -137,7 +160,19 @@
           "description": "Whether the deal was closed by design"
         }
       },
-      "required": ["client", "lob", "type", "clientLocation", "status", "totalHours", "billedRate", "totalValue", "startDate", "finishDate", "assignedStaffIds"]
+      "required": [
+        "client",
+        "lob",
+        "type",
+        "clientLocation",
+        "status",
+        "totalHours",
+        "billedRate",
+        "totalValue",
+        "startDate",
+        "finishDate",
+        "assignedStaffIds"
+      ]
     },
     "Sale": {
       "title": "Sale",
@@ -162,7 +197,12 @@
         },
         "status": {
           "type": "string",
-          "enum": ["Open", "In Negotiation", "Closed", "Lost"],
+          "enum": [
+            "Open",
+            "In Negotiation",
+            "Closed",
+            "Lost"
+          ],
           "description": "Sale status"
         },
         "projectedValue": {
@@ -188,9 +228,161 @@
         "designClosed": {
           "type": "boolean",
           "description": "Whether the deal was closed by design"
+        },
+        "projectedCloseDate": {
+          "type": "string",
+          "description": "Present on the client type but NOT persisted by App.tsx handleSetSalesList (pre-existing behaviour, left unchanged)."
         }
       },
-      "required": ["client", "lob", "type", "clientLocation", "status", "projectedValue", "projectedHours", "projectedRate", "lastContactDate"]
+      "required": [
+        "client",
+        "lob",
+        "type",
+        "clientLocation",
+        "status",
+        "projectedValue",
+        "projectedHours",
+        "projectedRate",
+        "lastContactDate"
+      ]
+    },
+    "StaffProfile": {
+      "title": "StaffProfile",
+      "description": "Extended staff data, keyed by the staff document id. Kept in its own collection because App.tsx overwrites whole staff documents on save. Entered manually by Adam from Rippling; no self-service.",
+      "type": "object",
+      "properties": {
+        "birthday": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "YYYY-MM-DD"
+        },
+        "companyJoinDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "YYYY-MM-DD"
+        },
+        "ptoDates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string"
+              },
+              "end": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "holidays": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "lastOneOnOneDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "YYYY-MM-DD of the most recent one-on-one"
+        },
+        "oneOnOneCadence": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "monthly",
+            "sixWeeks",
+            null
+          ],
+          "description": "Set by Adam per person"
+        },
+        "lastShowAndTellDate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Last design-team show-and-tell this person presented"
+        },
+        "updatedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ProjectMeta": {
+      "title": "ProjectMeta",
+      "description": "Extended project data keyed by project id (health status for the exec update). Separate collection for the same reason as StaffProfile.",
+      "type": "object",
+      "properties": {
+        "healthStatus": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "On Track",
+            "At Risk",
+            "Off Track",
+            null
+          ]
+        },
+        "healthNote": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Personal to-do shown on the daily dashboard.",
+      "type": "object",
+      "properties": {
+        "ownerUid": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "done": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ownerUid",
+        "title"
+      ]
     }
   },
   "firestore": {
@@ -217,6 +409,30 @@
         "$ref": "#/entities/Sale"
       },
       "description": "Stores sales leads"
+    },
+    "/staffProfiles/{staffId}": {
+      "schema": {
+        "$ref": "#/entities/StaffProfile"
+      },
+      "description": "Extended staff fields. Admin+ only."
+    },
+    "/projectMeta/{projectId}": {
+      "schema": {
+        "$ref": "#/entities/ProjectMeta"
+      },
+      "description": "Project health. Admin+ only."
+    },
+    "/tasks/{taskId}": {
+      "schema": {
+        "$ref": "#/entities/Task"
+      },
+      "description": "Owner-only tasks."
+    },
+    "/personal/{uid}/...": {
+      "description": "All personal-module data for a Super Admin (profile hub, social drafts, calendar reminders, job applications, resume drafts). Owner Super Admin only."
+    },
+    "/integrations/{uid}/...": {
+      "description": "OAuth tokens. Server-only (Cloud Functions); clients are denied."
     }
   }
 }
