@@ -97,7 +97,7 @@ export default function AddSaleWizard({ isOpen, onClose, onSave, initialData }: 
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 2, pb: 1 }}>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-0.02em', fontFamily: '"Outfit", sans-serif' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
             {initialData ? 'Edit Lead' : 'Add New Lead'}
           </Typography>
           <Typography variant="caption" color="text.secondary">Step {activeStep + 1} of {steps.length}: {steps[activeStep]}</Typography>
@@ -219,7 +219,7 @@ export default function AddSaleWizard({ isOpen, onClose, onSave, initialData }: 
                 />
                 <Paper variant="outlined" sx={{ p: 3, bgcolor: 'primary.container', color: 'primary.onContainer', borderRadius: 4, textAlign: 'center' }}>
                   <Typography variant="caption" sx={{ display: 'block', mb: 0.5, opacity: 0.8 }}>Total Projected Value:</Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
                     ${totalProjectedValue.toLocaleString()}
                   </Typography>
                 </Paper>

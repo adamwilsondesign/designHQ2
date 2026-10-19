@@ -329,11 +329,20 @@ export default function App() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-900 dark:text-white">Loading...</div>;
+    return (
+      <div role="status" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#6B7280', background: isDarkMode ? '#0B0D10' : '#F7F8FA' }}>
+        Loading…
+      </div>
+    );
   }
 
   if (!user) {
-    return <Login onLogin={setUser} />;
+    return (
+      <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+        <CssBaseline />
+        <Login onLogin={setUser} />
+      </ThemeProvider>
+    );
   }
 
   const renderView = () => {
@@ -383,10 +392,10 @@ export default function App() {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentView}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
           >
             {renderView()}
           </motion.div>

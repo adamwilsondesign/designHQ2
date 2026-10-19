@@ -157,7 +157,7 @@ export default function AddProjectWizard({ isOpen, onClose, onSave, staffList, p
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 2, pb: 1 }}>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-0.02em', fontFamily: '"Outfit", sans-serif' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
             {initialData ? 'Edit Project' : 'Add New Project'}
           </Typography>
           <Typography variant="caption" color="text.secondary">Step {activeStep + 1} of {steps.length}: {steps[activeStep]}</Typography>
@@ -273,7 +273,7 @@ export default function AddProjectWizard({ isOpen, onClose, onSave, staffList, p
                 </Grid>
                 <Paper variant="outlined" sx={{ p: 2, bgcolor: 'primary.container', color: 'primary.onContainer', borderRadius: 3, textAlign: 'center' }}>
                   <Typography variant="caption" sx={{ display: 'block', mb: 0.5, opacity: 0.8 }}>Total Project Value:</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
                     ${(Number(formData.totalValue) || 0).toLocaleString()}
                   </Typography>
                 </Paper>

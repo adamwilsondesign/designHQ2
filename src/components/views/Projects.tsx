@@ -285,7 +285,7 @@ export default function Projects({ user, projectsList, setProjectsList, staffLis
           <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.container', color: 'primary.main', mx: 'auto', mb: 3 }}>
             <FolderOpen size={32} />
           </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, fontFamily: '"Outfit", sans-serif', letterSpacing: '-0.02em' }}>No projects yet</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, letterSpacing: '-0.02em' }}>No projects yet</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
             Create your first project to start tracking revenue, allocating staff, and monitoring profitability.
           </Typography>
@@ -403,12 +403,12 @@ export default function Projects({ user, projectsList, setProjectsList, staffLis
                       </TableCell>
                       {canViewFinancials && (
                         <>
-                          <TableCell sx={{ fontWeight: 600 }}>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>
                             <TableSortLabel active={sortColumn === 'Total Value'} direction={sortColumn === 'Total Value' ? sortDirection : 'asc'} onClick={() => handleSort('Total Value')}>
                               Total Value
                             </TableSortLabel>
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>
                             <TableSortLabel active={sortColumn === 'Est. Profit'} direction={sortColumn === 'Est. Profit' ? sortDirection : 'asc'} onClick={() => handleSort('Est. Profit')}>
                               Est. Profit
                             </TableSortLabel>
@@ -452,8 +452,8 @@ export default function Projects({ user, projectsList, setProjectsList, staffLis
                           </TableCell>
                           {canViewFinancials && (
                             <>
-                              <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{formatUSD(project.totalValue)}</Typography></TableCell>
-                              <TableCell>
+                              <TableCell align="right"><Typography variant="body2" sx={{ fontWeight: 600 }}>{formatUSD(project.totalValue)}</Typography></TableCell>
+                              <TableCell align="right">
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: profit >= 0 ? 'success.main' : 'error.main' }}>
                                   {formatUSD(profit)}
                                 </Typography>
@@ -541,7 +541,7 @@ export default function Projects({ user, projectsList, setProjectsList, staffLis
                                       ...style
                                     }}
                                   >
-                                    <Typography variant="caption" noWrap sx={{ fontWeight: 800, fontSize: '0.6rem', textTransform: 'uppercase' }}>
+                                    <Typography variant="caption" noWrap sx={{ fontWeight: 600, fontSize: '0.6rem', textTransform: 'uppercase' }}>
                                       {project.client}
                                     </Typography>
                                   </Box>
@@ -623,7 +623,7 @@ export default function Projects({ user, projectsList, setProjectsList, staffLis
                                       ...style
                                     }}
                                   >
-                                    <Typography variant="caption" noWrap sx={{ fontWeight: 800, fontSize: '0.6rem', textTransform: 'uppercase' }}>
+                                    <Typography variant="caption" noWrap sx={{ fontWeight: 600, fontSize: '0.6rem', textTransform: 'uppercase' }}>
                                       {project.client}
                                     </Typography>
                                   </Box>

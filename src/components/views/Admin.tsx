@@ -124,7 +124,7 @@ export default function Admin({ user, staffList = [] }: { user: User, staffList?
           <Avatar sx={{ width: 64, height: 64, bgcolor: 'error.light', color: 'error.main', mx: 'auto', mb: 3 }}>
             <ShieldAlert size={32} />
           </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, fontFamily: '"Outfit", sans-serif', letterSpacing: '-0.02em', color: 'error.main' }}>Access Denied</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, letterSpacing: '-0.02em', color: 'error.main' }}>Access Denied</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
             Only Super Admins can access system settings. Please contact your administrator if you need access.
           </Typography>
@@ -140,7 +140,7 @@ export default function Admin({ user, staffList = [] }: { user: User, staffList?
           <UserCog size={24} />
         </Avatar>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em', fontFamily: '"Outfit", sans-serif' }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
             System Settings
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -266,7 +266,7 @@ export default function Admin({ user, staffList = [] }: { user: User, staffList?
         fullWidth
         PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
       >
-        <DialogTitle sx={{ fontWeight: 800, letterSpacing: '-0.02em', fontFamily: '"Outfit", sans-serif' }}>
+        <DialogTitle sx={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
           Add New User
         </DialogTitle>
         <DialogContent>

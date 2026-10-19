@@ -733,7 +733,7 @@ function KpiCard({ title, value, icon, color, subtext, onClick }: { title: strin
             {icon}
           </Box>
         </Stack>
-        <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5, letterSpacing: '-0.02em', fontFamily: '"Outfit", sans-serif' }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5, letterSpacing: '-0.02em' }}>
           {value}
         </Typography>
         {subtext && (

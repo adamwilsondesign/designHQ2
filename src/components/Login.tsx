@@ -64,7 +64,7 @@ export default function Login({ onLogin }: { onLogin: (user: User) => void }) {
             >
               <Hexagon size={28} />
             </Avatar>
-            <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.03em', textAlign: 'center', mb: 1, fontFamily: '"Outfit", sans-serif' }}>
+            <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.03em', textAlign: 'center', mb: 1 }}>
               Design HQ
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>

@@ -158,7 +158,7 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
           <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.container', color: 'primary.main', mx: 'auto', mb: 3 }}>
             <UsersIcon size={32} />
           </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, fontFamily: '"Outfit", sans-serif', letterSpacing: '-0.02em' }}>No staff members yet</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, letterSpacing: '-0.02em' }}>No staff members yet</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
             Add your first team member to start allocating them to projects and tracking costs.
           </Typography>
@@ -291,7 +291,7 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
                       </TableCell>
                       {canViewCost && (
                         <>
-                          <TableCell sx={{ fontWeight: 600 }}>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>
                             <TableSortLabel
                               active={sortField === 'hourlyCost'}
                               direction={sortField === 'hourlyCost' ? sortOrder : 'asc'}
@@ -300,7 +300,7 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
                               Rate USD
                             </TableSortLabel>
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>
                             <TableSortLabel
                               active={sortField === 'hourlyCostCAD'}
                               direction={sortField === 'hourlyCostCAD' ? sortOrder : 'asc'}
@@ -348,12 +348,12 @@ export default function Staff({ user, staffList, setStaffList }: { user: User, s
                         </TableCell>
                         {canViewCost && (
                           <>
-                            <TableCell>
+                            <TableCell align="right">
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                 {formatUSD(staff.hourlyCost)}/hr
                               </Typography>
                             </TableCell>
-                            <TableCell>
+                            <TableCell align="right">
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                 {formatCAD(staff.hourlyCost * 1.35)}/hr
                               </Typography>
