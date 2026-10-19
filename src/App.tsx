@@ -14,6 +14,10 @@ import DailyDashboard from './modules/dashboardHome/components/DailyDashboard';
 import ProposalsView from './modules/proposals/components/ProposalsView';
 import MeetingsView from './modules/meetings/components/MeetingsView';
 import ExecUpdateView from './modules/execUpdate/components/ExecUpdateView';
+import SocialView from './modules/social/components/SocialView';
+import CalendarView from './modules/calendar/components/CalendarView';
+import JobSearchView from './modules/jobSearch/components/JobSearchView';
+import ProfileView from './modules/profile/components/ProfileView';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import Dashboard from './components/views/Dashboard';
@@ -348,6 +352,11 @@ export default function App() {
       case 'projects': return <Projects user={user} projectsList={projectsList} setProjectsList={handleSetProjectsList} staffList={staffList} />;
       case 'revenue': return <Revenue user={user} salesList={salesList} setSalesList={handleSetSalesList} projectsList={projectsList} setProjectsList={handleSetProjectsList} />;
       case 'admin': return <Admin user={user} staffList={staffList} />;
+      // Personal modules: Super Admin only (canAccess above + firestore.rules).
+      case 'social': return userId && <SocialView uid={userId} />;
+      case 'calendar': return userId && <CalendarView uid={userId} />;
+      case 'jobSearch': return userId && <JobSearchView uid={userId} />;
+      case 'profile': return userId && <ProfileView uid={userId} />;
       default: return <DailyDashboard user={user} userId={userId} staffList={staffList} projectsList={projectsList} salesList={salesList} onNavigate={setCurrentView} />;
     }
   };

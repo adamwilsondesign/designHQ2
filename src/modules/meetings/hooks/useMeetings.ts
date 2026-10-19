@@ -2,6 +2,7 @@ import { addDoc, collection, doc, orderBy, setDoc, updateDoc, writeBatch } from 
 import { auth, db } from '../../../lib/firebase';
 import { useCollection } from '../../../common/hooks/useCollection';
 import { callFunction, nowIso, safeFileName, uploadFile } from '../../../common/firebaseHelpers';
+import { createCalendarEvent } from '../../../common/google';
 import { Meeting, MeetingSeries } from '../types';
 import { toYmd } from '../lib/schedule';
 
@@ -25,7 +26,7 @@ export const updateMeeting = (id: string, patch: Partial<Meeting>) => updateDoc(
 export async function addToCalendar(meetingId: string, m: Pick<Meeting, 'title' | 'date' | 'durationMinutes' | 'agenda'>, attendees: string[]) {
   const start = new Date(m.date);
   const end = new Date(start.getTime() + m.durationMinutes * 60000);
-  const res = await callFunction<object, { eventId: string; htmlLink: string }>('calendarCreateEvent', {
+  const res = await createCalendarEvent({
     account: 'lazer',
     summary: m.title,
     description: m.agenda || '',

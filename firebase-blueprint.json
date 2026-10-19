@@ -733,6 +733,280 @@
           "type": "array"
         }
       }
+    },
+    "PersonalProfile": {
+      "title": "PersonalProfile",
+      "description": "Profile hub at personal/{uid}/profile/main. Single source of truth for every personal generator.",
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string"
+        },
+        "linkedinUrl": {
+          "type": "string"
+        },
+        "portfolioUrl": {
+          "type": "string"
+        },
+        "resume": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "uploadedAt": {
+              "type": "string"
+            }
+          }
+        },
+        "bio": {
+          "type": "string"
+        },
+        "targets": {
+          "type": "object",
+          "properties": {
+            "roles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "companies": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "industries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "toneOfVoice": {
+          "type": "string",
+          "description": "Canonical voice (Bourdain-style, no cooking references)"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "SocialDraft": {
+      "title": "SocialDraft",
+      "type": "object",
+      "properties": {
+        "weekOf": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "linkedin",
+            "x"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "text",
+            "visual"
+          ]
+        },
+        "theme": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "visualBrief": {
+          "type": "string"
+        },
+        "imagePath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "altText": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "posted",
+            "discarded"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "SocialWeek": {
+      "title": "SocialWeek",
+      "type": "object",
+      "properties": {
+        "weekOf": {
+          "type": "string"
+        },
+        "themes": {
+          "type": "array"
+        },
+        "trendsNotes": {
+          "type": "string"
+        }
+      }
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "birthday",
+            "anniversary",
+            "trip",
+            "other"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "recurrence": {
+          "type": "string",
+          "enum": [
+            "yearly",
+            "once"
+          ]
+        },
+        "leadDays": {
+          "type": "integer"
+        },
+        "blockMinutes": {
+          "type": "integer"
+        },
+        "action": {
+          "type": "string"
+        },
+        "handled": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "JobApplication": {
+      "title": "JobApplication",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "appliedDate": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "applied",
+            "screening",
+            "interviewing",
+            "offer",
+            "rejected",
+            "withdrawn"
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "tailoredDocId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "TailoredDoc": {
+      "title": "TailoredDoc",
+      "type": "object",
+      "properties": {
+        "jobUrl": {
+          "type": "string"
+        },
+        "postingText": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "fetchError": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "draft": {
+          "type": "object"
+        },
+        "history": {
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "JobSearchSettings": {
+      "title": "JobSearchSettings",
+      "type": "object",
+      "properties": {
+        "weeklyMin": {
+          "type": "integer"
+        },
+        "weeklyMax": {
+          "type": "integer"
+        },
+        "boards": {
+          "type": "array"
+        }
+      }
     }
   },
   "firestore": {
@@ -778,9 +1052,6 @@
       },
       "description": "Owner-only tasks."
     },
-    "/personal/{uid}/...": {
-      "description": "All personal-module data for a Super Admin (profile hub, social drafts, calendar reminders, job applications, resume drafts). Owner Super Admin only."
-    },
     "/integrations/{uid}/...": {
       "description": "OAuth tokens. Server-only (Cloud Functions); clients are denied."
     },
@@ -813,6 +1084,48 @@
         "$ref": "#/entities/ExecUpdate"
       },
       "description": "Admin+ only."
+    },
+    "/personal/{uid}/profile/main": {
+      "schema": {
+        "$ref": "#/entities/PersonalProfile"
+      },
+      "description": "Owner Super Admin only."
+    },
+    "/personal/{uid}/socialDrafts/{id}": {
+      "schema": {
+        "$ref": "#/entities/SocialDraft"
+      },
+      "description": "Owner Super Admin only."
+    },
+    "/personal/{uid}/socialWeeks/{weekOf}": {
+      "schema": {
+        "$ref": "#/entities/SocialWeek"
+      },
+      "description": "Owner Super Admin only."
+    },
+    "/personal/{uid}/reminders/{id}": {
+      "schema": {
+        "$ref": "#/entities/Reminder"
+      },
+      "description": "Owner Super Admin only."
+    },
+    "/personal/{uid}/jobApplications/{id}": {
+      "schema": {
+        "$ref": "#/entities/JobApplication"
+      },
+      "description": "Owner Super Admin only."
+    },
+    "/personal/{uid}/tailoredDocs/{id}": {
+      "schema": {
+        "$ref": "#/entities/TailoredDoc"
+      },
+      "description": "Owner Super Admin only."
+    },
+    "/personal/{uid}/settings/jobSearch": {
+      "schema": {
+        "$ref": "#/entities/JobSearchSettings"
+      },
+      "description": "Owner Super Admin only."
     }
   }
 }

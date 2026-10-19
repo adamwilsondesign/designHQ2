@@ -1,26 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Alert, Button, Stack, Typography } from '@mui/material';
-import { callFunction } from '../../../common/firebaseHelpers';
+import { connectGoogle, useGoogleAccounts } from '../../../common/google';
 
-interface AccountStatus { account: 'lazer' | 'polyform' | 'personal'; connected: boolean; email: string | null }
-
-// Connection status for the Lazer Google account used to book meetings.
-export function useGoogleAccounts() {
-  const [accounts, setAccounts] = useState<AccountStatus[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const refresh = () =>
-    callFunction<object, { accounts: AccountStatus[] }>('googleAccountsStatus', {})
-      .then(r => { setAccounts(r.accounts); setError(null); })
-      .catch(e => setError(e.message));
-  useEffect(() => { refresh(); }, []);
-  return { accounts, error, refresh };
-}
-
-export async function connectGoogle(account: AccountStatus['account']) {
-  const { url } = await callFunction<object, { url: string }>('googleAuthUrl', { account });
-  window.location.href = url;
-}
-
+// Shows which Lazer Google account meetings are booked on.
 export default function LazerCalendarStatus() {
   const { accounts, error } = useGoogleAccounts();
   const lazer = accounts?.find(a => a.account === 'lazer');

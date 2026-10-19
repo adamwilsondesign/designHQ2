@@ -19,7 +19,11 @@ import {
   CalendarDays,
   FileText,
   MessagesSquare,
-  Megaphone
+  Megaphone,
+  PenLine,
+  Calendar,
+  Briefcase,
+  UserRound
 } from 'lucide-react';
 import { 
   Box, 
@@ -85,6 +89,10 @@ export default function Layout({
     { id: 'proposals', label: 'Proposals', icon: FileText },
     { id: 'meetings', label: 'Meetings', icon: MessagesSquare },
     { id: 'execUpdate', label: 'Exec Update', icon: Megaphone },
+    { id: 'social', label: 'Social', icon: PenLine },
+    { id: 'calendar', label: 'Calendar', icon: Calendar },
+    { id: 'jobSearch', label: 'Job Search', icon: Briefcase },
+    { id: 'profile', label: 'Profile', icon: UserRound },
     { id: 'admin', label: 'Admin', icon: Settings },
   ];
 

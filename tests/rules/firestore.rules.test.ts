@@ -174,6 +174,32 @@ describe('First sign-in (lib/auth.ts flow)', () => {
   });
 });
 
+describe('Personal modules', () => {
+  const paths = ['profile/main', 'socialDrafts/d2', 'socialWeeks/2026-10-19', 'reminders/r1', 'jobApplications/a1', 'tailoredDocs/t1', 'settings/jobSearch'];
+
+  it('Adam can read and write every personal collection', async () => {
+    const db = as(ADAM).firestore();
+    for (const p of paths) {
+      await assertSucceeds(setDoc(doc(db, `personal/${ADAM.uid}/${p}`), { x: 1 }));
+      await assertSucceeds(getDoc(doc(db, `personal/${ADAM.uid}/${p}`)));
+    }
+  });
+
+  it('Louie and regular users are denied all of them', async () => {
+    for (const who of [LOUIE, DESIGNER]) {
+      const db = as(who).firestore();
+      for (const p of paths) {
+        await assertFails(getDoc(doc(db, `personal/${ADAM.uid}/${p}`)));
+        await assertFails(setDoc(doc(db, `personal/${who.uid}/${p}`), { x: 1 }));
+      }
+    }
+  });
+
+  it('OAuth tokens are never readable from a client', async () => {
+    await assertFails(getDoc(doc(as(ADAM).firestore(), `integrations/${ADAM.uid}/googleAccounts/lazer`)));
+  });
+});
+
 describe('Storage', () => {
   it('professional files are Admin+, personal files are owner Super Admin only', async () => {
     await assertSucceeds(uploadString(ref(as(LOUIE).storage(), 'professional/templates/a.docx'), 'x'));

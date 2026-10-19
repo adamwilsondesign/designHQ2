@@ -154,7 +154,8 @@ export const calendarCreateEvent = onCall({ secrets: googleSecrets }, async requ
   const { uid } = await requireRole(request, rolesFor(account));
   if (!d.summary || !d.start || !d.end) throw new HttpsError('invalid-argument', 'summary, start and end are required.');
   const token = await accessToken(uid, account);
-  const event = await calendarFetch(token, `/calendars/primary/events?sendUpdates=${d.attendees?.length ? 'all' : 'none'}`, {
+  const q = new URLSearchParams({ sendUpdates: d.attendees?.length ? 'all' : 'none', ...(d.withMeet ? { conferenceDataVersion: '1' } : {}) });
+  const event = await calendarFetch(token, `/calendars/primary/events?${q}`, {
     method: 'POST',
     body: JSON.stringify({
       summary: d.summary,

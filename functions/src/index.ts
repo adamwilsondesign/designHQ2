@@ -12,3 +12,4 @@ export {
   calendarCreateEvent,
   calendarListEvents,
 } from './google.js';
+export { socialGenerateWeek, socialCaptionImage, jobTailor, jobRenderDocs } from './personal.js';
