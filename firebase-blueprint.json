@@ -1,0 +1,222 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the system with role-based access",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User's email address"
+        },
+        "name": {
+          "type": "string",
+          "description": "User's full name"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Super Admin", "Admin", "Regular User"],
+          "description": "User's role"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "URL to user's avatar"
+        }
+      },
+      "required": ["email", "name", "role"]
+    },
+    "StaffMember": {
+      "title": "StaffMember",
+      "description": "A staff member in the organization",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Staff member's name"
+        },
+        "personalEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Staff member's personal email"
+        },
+        "lazerEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Staff member's Lazer email"
+        },
+        "location": {
+          "type": "string",
+          "description": "Staff member's location"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "Staff member's timezone"
+        },
+        "employmentType": {
+          "type": "string",
+          "description": "Type of employment (e.g., Full-Time, Contractor)"
+        },
+        "hourlyCost": {
+          "type": "number",
+          "description": "Hourly cost of the staff member"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of skills"
+        }
+      },
+      "required": ["name", "location", "timezone", "employmentType", "hourlyCost", "skills"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A project being worked on",
+      "type": "object",
+      "properties": {
+        "client": {
+          "type": "string",
+          "description": "Client name"
+        },
+        "lob": {
+          "type": "string",
+          "description": "Line of business"
+        },
+        "type": {
+          "type": "string",
+          "description": "Project type"
+        },
+        "clientLocation": {
+          "type": "string",
+          "description": "Client's location"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Open", "Closed", "Lost"],
+          "description": "Project status"
+        },
+        "totalHours": {
+          "type": "number",
+          "description": "Total estimated hours"
+        },
+        "billedRate": {
+          "type": "number",
+          "description": "Hourly billed rate"
+        },
+        "totalValue": {
+          "type": "number",
+          "description": "Total project value"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Project start date"
+        },
+        "finishDate": {
+          "type": "string",
+          "description": "Project finish date"
+        },
+        "assignedStaffIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of assigned staff IDs"
+        },
+        "staffAllocations": {
+          "type": "object",
+          "description": "Map of staff IDs to their allocation percentage (0-100)"
+        },
+        "designSourced": {
+          "type": "boolean",
+          "description": "Whether the deal was sourced by design"
+        },
+        "designClosed": {
+          "type": "boolean",
+          "description": "Whether the deal was closed by design"
+        }
+      },
+      "required": ["client", "lob", "type", "clientLocation", "status", "totalHours", "billedRate", "totalValue", "startDate", "finishDate", "assignedStaffIds"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "A sales lead or opportunity",
+      "type": "object",
+      "properties": {
+        "client": {
+          "type": "string",
+          "description": "Client name"
+        },
+        "lob": {
+          "type": "string",
+          "description": "Line of business"
+        },
+        "type": {
+          "type": "string",
+          "description": "Project type"
+        },
+        "clientLocation": {
+          "type": "string",
+          "description": "Client's location"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Open", "In Negotiation", "Closed", "Lost"],
+          "description": "Sale status"
+        },
+        "projectedValue": {
+          "type": "number",
+          "description": "Projected total value"
+        },
+        "projectedHours": {
+          "type": "number",
+          "description": "Projected total hours"
+        },
+        "projectedRate": {
+          "type": "number",
+          "description": "Projected hourly rate"
+        },
+        "lastContactDate": {
+          "type": "string",
+          "description": "Date of last contact"
+        },
+        "designSourced": {
+          "type": "boolean",
+          "description": "Whether the deal was sourced by design"
+        },
+        "designClosed": {
+          "type": "boolean",
+          "description": "Whether the deal was closed by design"
+        }
+      },
+      "required": ["client", "lob", "type", "clientLocation", "status", "projectedValue", "projectedHours", "projectedRate", "lastContactDate"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profiles and roles"
+    },
+    "/staff/{staffId}": {
+      "schema": {
+        "$ref": "#/entities/StaffMember"
+      },
+      "description": "Stores staff members"
+    },
+    "/projects/{projectId}": {
+      "schema": {
+        "$ref": "#/entities/Project"
+      },
+      "description": "Stores projects"
+    },
+    "/sales/{saleId}": {
+      "schema": {
+        "$ref": "#/entities/Sale"
+      },
+      "description": "Stores sales leads"
+    }
+  }
+}
