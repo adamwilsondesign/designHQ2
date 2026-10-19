@@ -85,10 +85,85 @@ describe('renderWithSections', () => {
 describe('toBlocks', () => {
   it('parses paragraphs, bullets, subheadings and tables', () => {
     expect(toBlocks('a\nb\n\n- x\n### H\n| 1 | 2 |')).toEqual([
-      { type: 'paragraph', text: 'a b' },
+      { type: 'paragraph', text: 'a' },
+      { type: 'paragraph', text: 'b' },
       { type: 'bullet', text: 'x' },
       { type: 'subheading', text: 'H' },
       { type: 'table', rows: [['1', '2']] },
     ]);
+  });
+});
+
+describe('real-template behaviours', () => {
+  // Mirrors what the Lazer template does: page-break paragraphs styled as
+  // Heading 1 between sections, CLIENT as both plain text and DOCPROPERTY
+  // fields, highlighted [ instructions ], and Stage | Scope tables.
+  async function lazerLike() {
+    const { PageBreak } = await import('docx');
+    const doc = new Document({
+      customProperties: [{ name: 'CLIENT', value: 'CLIENT' }, { name: 'Phase 1 Start Date', value: 'Phase 1 Start Date' }],
+      sections: [{
+        children: [
+          new Paragraph({ text: 'PREPARED FOR' }),
+          new Paragraph({ text: 'FIELD_CLIENT' }),
+          new Paragraph({ text: 'Executive Summary', heading: HeadingLevel.HEADING_1 }),
+          new Paragraph({ children: [new TextRun({ text: '[WRITE SUMMARY]', highlight: 'yellow' })] }),
+          new Paragraph({ children: [new TextRun('We help CLIENT grow.')] }),
+          new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new PageBreak()] }),
+          new Paragraph({ text: 'About Lazer', heading: HeadingLevel.HEADING_1 }),
+          new Paragraph({ children: [new TextRun("CLIENT's team works with Lazer.")] }),
+          new Paragraph({ text: 'Project Timeline and Budget', heading: HeadingLevel.HEADING_1 }),
+          new Paragraph({ children: [new TextRun('Start: FIELD_DATE')] }),
+          new Table({ rows: [
+            new TableRow({ children: [new TableCell({ children: [new Paragraph('Stage')] }), new TableCell({ children: [new Paragraph('Scope')] })] }),
+            new TableRow({ children: [new TableCell({ children: [new Paragraph('Discovery')] }), new TableCell({ children: [new Paragraph('Interviews')] })] }),
+          ] }),
+        ],
+      }],
+    });
+    const JSZip = (await import('jszip')).default;
+    const zip = await JSZip.loadAsync(Buffer.from(await Packer.toBuffer(doc)));
+    let xml = await zip.file('word/document.xml')!.async('string');
+    // A complex DOCPROPERTY field and a simple one, as Word writes them.
+    xml = xml.replace(/<w:r>(?:(?!<w:r>).)*?FIELD_CLIENT<\/w:t><\/w:r>/,
+      '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> DOCPROPERTY "CLIENT" \\* MERGEFORMAT </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>CLIENT</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>');
+    xml = xml.replace(/<w:r>(?:(?!<w:r>).)*?FIELD_DATE<\/w:t><\/w:r>/,
+      '<w:fldSimple w:instr=" DOCPROPERTY &quot;Phase 1 Start Date&quot; "><w:r><w:t>Phase 1 Start Date</w:t></w:r></w:fldSimple>');
+    zip.file('word/document.xml', xml);
+    return { buffer: await zip.generateAsync({ type: 'nodebuffer' }), JSZip };
+  }
+
+  it('reads custom properties and describes structure for the AI', async () => {
+    const { buffer } = await lazerLike();
+    const { properties, sections } = await parseTemplate(buffer);
+    expect(properties.map(p => p.name)).toEqual(['CLIENT', 'Phase 1 Start Date']);
+    expect(sections.map(s => s.heading)).toEqual(['Executive Summary', 'About Lazer', 'Project Timeline and Budget']);
+    expect(sections[2].text).toContain('| Stage | Scope |');
+  });
+
+  it('keeps page breaks, fills fields and CLIENT, and ignores instruction styling', async () => {
+    const { buffer, JSZip } = await lazerLike();
+    const out = await renderWithSections(buffer, {
+      0: 'Acme wants to grow.\nSecond line.',
+      2: '| Stage | Scope |\n|---|---|\n| Build | Theme:<br>- Homepage<br>- PDP |',
+    }, { placeholders: { CLIENT: 'Acme' }, properties: { CLIENT: 'Acme', 'Phase 1 Start Date': 'Jan 12, 2027' } });
+
+    const zip = await JSZip.loadAsync(out);
+    const xml = await zip.file('word/document.xml')!.async('string');
+    const text = (xml.match(/<w:t[^>]*>[^<]*<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g, '')).join('|');
+    expect(xml).toContain('w:type="page"');
+    expect(text).not.toMatch(/\bCLIENT\b/);
+    expect(text).toContain("Acme's team works with Lazer.");
+    expect(text).toContain('PREPARED FOR|Acme');
+    expect(await zip.file('docProps/custom.xml')!.async('string')).toContain('Jan 12, 2027');
+    expect(await zip.file('word/settings.xml')!.async('string')).toContain('w:updateFields');
+
+    const { sections } = await parseTemplate(out);
+    expect(sections[0].text).toBe('Acme wants to grow.\nSecond line.');
+    // The sample table has no list style, so cell bullets render as plain lines.
+    expect(sections[2].text).toContain('| Build | Theme:<br>Homepage<br>PDP |');
+    // The generated summary must not copy the highlighted instruction's run style.
+    const summaryXml = xml.slice(xml.indexOf('Acme wants to grow.') - 400, xml.indexOf('Acme wants to grow.'));
+    expect(summaryXml).not.toContain('w:highlight');
   });
 });

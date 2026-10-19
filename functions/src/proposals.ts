@@ -31,7 +31,7 @@ export const proposalParseTemplate = onCall({ memory: '1GiB', timeoutSeconds: 12
   if (!storagePath?.startsWith('professional/')) throw new HttpsError('failed-precondition', 'Template has no file.');
 
   try {
-    const { sections, preamble } = await parseTemplate(await downloadFile(storagePath));
+    const { sections, preamble, properties } = await parseTemplate(await downloadFile(storagePath));
     const stored: StoredSection[] = sections.map(s => ({
       index: s.index,
       heading: s.heading,
@@ -46,6 +46,7 @@ export const proposalParseTemplate = onCall({ memory: '1GiB', timeoutSeconds: 12
     await ref.update({
       sections: stored,
       preamble: preamble.slice(0, 2000),
+      properties: properties.map(p => p.name),
       parseStatus: stored.length ? 'parsed' : 'error',
       parseError: stored.length ? null : 'No heading-styled sections were found. The parser splits on Word heading styles (Heading 1, Heading 2…); tell Adam how this template marks its sections.',
       parsedAt: FieldValue.serverTimestamp(),
@@ -65,7 +66,11 @@ Rules:
 - When something a section needs is missing, write "[TBD: what is needed]" inline rather than guessing.
 - Match the structure, length and tone of the template's own example text for each section.
 - Write in confident, plain, client-facing English. No filler.
-- Formatting: blank line between paragraphs, "- " for bullets, "### " for a sub-heading, and markdown pipe tables ("| a | b |") for tabular content such as phases, hours and budget. "**bold**" is allowed.
+- The template example text for each section is a model of a finished section. Text in [square brackets] there is an instruction to you (e.g. "[WRITE SUMMARY - INCLUDE: ...]", "[ MODIFY CASE LIST TO SUIT CLIENT ]"): follow it and never copy it into the output.
+- Fill template placeholders such as "Phase 1 Start Date" or "<PHASE 3 PLACEHOLDER>" with real values from the notes or transcript, or "[TBD: ...]".
+- Refer to the client by name, never as "CLIENT".
+- Keep the template's structure: the same sub-headings (e.g. "### Phase 1: Discovery & Planning", "### Budget Summary"), the same tables and columns (e.g. "| Stage | Scope |"), and its standard scope lists where they fit this engagement. Remove items that don't apply; add ones the engagement needs.
+- Formatting: blank line between paragraphs, "- " for bullets, "### " for a sub-heading ("#### " one level deeper), and markdown pipe tables ("| a | b |"). Inside a table cell, separate lines with "<br>" and start bullet lines with "- " (e.g. "| Storefront | Core theme:<br>- Homepage<br>- PDP |"). "**bold**" is allowed.
 - Do not write the section heading itself.
 - Never rewrite or summarise the static sections; they are context only.`;
 
@@ -95,6 +100,7 @@ export const proposalGenerate = onCall(opts, async request => {
     transcripts.push(`--- ${t.name} ---\n${(await extractTextFromStorage(t.path)).slice(0, 120000)}`);
   }
 
+  const fieldNames = ((template.get('properties') as string[]) || []).filter(n => n !== 'CLIENT');
   const previous = p.draft?.sections as { index: number; content: string }[] | undefined;
   const prompt = [
     `Template variant: ${template.get('label')}`,
@@ -109,6 +115,9 @@ export const proposalGenerate = onCall(opts, async request => {
     'STATIC SECTIONS (context only, do not rewrite):',
     sections.filter(s => s.kind === 'static').map(s => `## ${s.heading}\n${s.text.slice(0, 1500)}`).join('\n\n'),
     '',
+    ...(fieldNames.length
+      ? ['DOCUMENT FIELDS TO FILL (short values used across the document, e.g. dates and durations; use "" when unknown):', fieldNames.join(', '), '']
+      : []),
     'VARIABLE SECTIONS TO WRITE (template example text shown for structure and length):',
     variable.map(s => `## [${s.index}] ${s.heading}${s.hasTable ? ' (the template uses a table here)' : ''}\n${s.text.slice(0, 4000)}`).join('\n\n'),
     ...(previous
@@ -126,7 +135,7 @@ export const proposalGenerate = onCall(opts, async request => {
       : []),
   ].join('\n');
 
-  const result = await generateJson<{ sections: { index: number; content: string }[]; openQuestions: string[] }>({
+  const result = await generateJson<{ sections: { index: number; content: string }[]; fields: { name: string; value: string }[]; openQuestions: string[] }>({
     system: SYSTEM,
     prompt,
     schema: {
@@ -140,9 +149,13 @@ export const proposalGenerate = onCall(opts, async request => {
             required: ['index', 'content'],
           },
         },
+        fields: {
+          type: Type.ARRAY,
+          items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, value: { type: Type.STRING } }, required: ['name', 'value'] },
+        },
         openQuestions: { type: Type.ARRAY, items: { type: Type.STRING } },
       },
-      required: ['sections', 'openQuestions'],
+      required: ['sections', 'fields', 'openQuestions'],
     },
   });
 
@@ -153,11 +166,17 @@ export const proposalGenerate = onCall(opts, async request => {
     content: result.sections.find(r => r.index === s.index)?.content?.trim() || '[TBD: the model returned nothing for this section]',
   }));
   const version = (p.draft?.version || 0) + 1;
+  // Field values Adam edited on the previous draft win over regenerated ones.
+  const fields: Record<string, string> = {};
+  for (const name of fieldNames) {
+    fields[name] = (p.draft?.fields?.[name] || '').trim() || (result.fields || []).find(f => f.name === name)?.value?.trim() || '';
+  }
   await ref.update({
     draft: {
       version,
       sections: draftSections.filter(s => allowed.has(s.index)),
       openQuestions: result.openQuestions || [],
+      fields,
       generatedAt: FieldValue.serverTimestamp(),
       generatedBy: uid,
     },
@@ -179,7 +198,10 @@ export const proposalRenderDocx = onCall({ memory: '1GiB', timeoutSeconds: 120 }
 
   const replacements: Record<number, string> = {};
   for (const s of p.draft.sections as { index: number; content: string }[]) replacements[s.index] = s.content;
-  const out = await renderWithSections(await downloadFile(template.storagePath), replacements);
+  const out = await renderWithSections(await downloadFile(template.storagePath), replacements, {
+    placeholders: p.clientName ? { CLIENT: String(p.clientName) } : {},
+    properties: { ...(p.draft.fields || {}), ...(p.clientName ? { CLIENT: String(p.clientName) } : {}) },
+  });
 
   const safeClient = String(p.clientName || 'client').replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '') || 'client';
   const path = `professional/proposals/${proposalId}/Lazer-Proposal-${safeClient}-v${p.draft.version}.docx`;

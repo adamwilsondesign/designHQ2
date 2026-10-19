@@ -147,12 +147,16 @@ function ProposalDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const [reviewNotes, setReviewNotes] = useState('');
   const [sectionNotes, setSectionNotes] = useState<Record<string, string>>({});
   const [edits, setEdits] = useState<Record<number, string>>({});
+  const [fields, setFields] = useState<Record<string, string>>({});
+  const [fieldsDirty, setFieldsDirty] = useState(false);
 
   useEffect(() => {
     if (!p) return;
     setReviewNotes(p.reviewNotes || '');
     setSectionNotes(p.sectionNotes || {});
     setEdits({});
+    setFields(p.draft?.fields || {});
+    setFieldsDirty(false);
     // Reset local edits whenever a new version lands.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p?.draft?.version]);
@@ -169,10 +173,10 @@ function ProposalDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const saveEdits = () => {
     if (!p.draft) return Promise.resolve();
     return updateProposal(p.id, {
-      draft: { ...p.draft, sections: p.draft.sections.map(s => (edits[s.index] != null ? { ...s, content: edits[s.index] } : s)) },
+      draft: { ...p.draft, fields, sections: p.draft.sections.map(s => (edits[s.index] != null ? { ...s, content: edits[s.index] } : s)) },
     } as Partial<Proposal>);
   };
-  const dirty = Object.keys(edits).length > 0;
+  const dirty = Object.keys(edits).length > 0 || fieldsDirty;
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -199,6 +203,22 @@ function ProposalDetail({ id, onBack }: { id: string; onBack: () => void }) {
               <Typography variant="subtitle2">Open questions</Typography>
               <Box component="ul" sx={{ pl: 2.5, m: 0 }}>{p.draft.openQuestions.map((q, i) => <li key={i}>{q}</li>)}</Box>
             </Alert>
+          )}
+          {Object.keys(fields).length > 0 && (
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="h6">Document fields</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Filled into the template's fields wherever they appear. The client name fills CLIENT. Your edits here are kept when you regenerate.
+                </Typography>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} useFlexGap flexWrap="wrap">
+                  {Object.keys(fields).map(name => (
+                    <TextField key={name} size="small" label={name} value={fields[name]} sx={{ minWidth: 220 }}
+                      placeholder="Not set" onChange={e => { setFields({ ...fields, [name]: e.target.value }); setFieldsDirty(true); }} />
+                  ))}
+                </Stack>
+              </CardContent>
+            </Card>
           )}
           <Card variant="outlined">
             <CardContent>

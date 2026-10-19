@@ -23,6 +23,17 @@ export async function uploadTemplate(variant: TemplateVariant, file: File, onPro
   await callFunction('proposalParseTemplate', { templateId: variant });
 }
 
+// Fills variants that have no file yet with this one (same file, same section
+// settings). Each variant can still be replaced on its own later.
+export async function copyTemplateToEmptyVariants(source: ProposalTemplate, existing: ProposalTemplate[]) {
+  const empty = TEMPLATE_VARIANTS.filter(v => v.id !== source.id && !existing.some(t => t.id === v.id));
+  const { id, label, ...rest } = source;
+  for (const v of empty) {
+    await setDoc(doc(db, 'proposalTemplates', v.id), { ...rest, label: v.label, copiedFrom: source.id });
+  }
+  return empty.length;
+}
+
 export const reparseTemplate = (variant: TemplateVariant) => callFunction('proposalParseTemplate', { templateId: variant });
 
 export async function saveTemplateSections(variant: TemplateVariant, sections: TemplateSection[]) {

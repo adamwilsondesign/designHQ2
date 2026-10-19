@@ -82,7 +82,14 @@ npm run lint        # tsc --noEmit
 
 ## Deploy (rebuild only)
 
+The web app can be hosted on Vercel (current) or Firebase Hosting; Firestore, Storage, Auth and Cloud Functions always live in the new Firebase project.
+
+**Vercel:** `vercel.json` is included. In the Vercel project settings add every `VITE_FIREBASE_*` value from `.env.example` plus `VITE_FIREBASE_TARGET=rebuild` (Production and Preview). Without them the app shows a "Firebase is not configured" screen instead of starting. Add the Vercel domain under Firebase Console → Authentication → Settings → Authorized domains, and use it as `APP_URL` for the functions.
+
+**Firebase (rules, functions, optional hosting):**
+
 ```bash
+npx firebase login
 npx firebase use --add          # pick the NEW project, alias it "rebuild"
-npx firebase deploy --project rebuild
+npx firebase deploy --project rebuild --only firestore,storage,functions
 ```

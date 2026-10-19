@@ -6,7 +6,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import FileDrop from '../../../common/components/FileDrop';
 import StatusChip from '../../../common/components/StatusChip';
 import { ErrorState, LoadingState } from '../../../common/components/States';
-import { reparseTemplate, saveTemplateSections, uploadTemplate, useTemplates } from '../hooks/useProposals';
+import { copyTemplateToEmptyVariants, reparseTemplate, saveTemplateSections, uploadTemplate, useTemplates } from '../hooks/useProposals';
 import { ProposalTemplate, TEMPLATE_VARIANTS, TemplateSection, TemplateVariant } from '../types';
 
 // The four proposal variants. Each upload is parsed into sections; Adam
@@ -24,13 +24,13 @@ export default function TemplateLibrary() {
         flagged for you to confirm before it can be used.
       </Alert>
       {TEMPLATE_VARIANTS.map(v => (
-        <TemplateCard key={v.id} variant={v.id} label={v.label} template={templates.data.find(t => t.id === v.id) || null} />
+        <TemplateCard key={v.id} variant={v.id} label={v.label} template={templates.data.find(t => t.id === v.id) || null} all={templates.data} />
       ))}
     </Stack>
   );
 }
 
-function TemplateCard({ variant, label, template }: { variant: TemplateVariant; label: string; template: ProposalTemplate | null }) {
+function TemplateCard({ variant, label, template, all }: { variant: TemplateVariant; label: string; template: ProposalTemplate | null; all: ProposalTemplate[] }) {
   const [progress, setProgress] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +71,11 @@ function TemplateCard({ variant, label, template }: { variant: TemplateVariant; 
               {template ? `${template.fileName} · uploaded ${new Date(template.uploadedAt).toLocaleDateString()}` : 'No file yet'}
               {sections.length > 0 && ` · ${sections.filter(s => s.kind === 'variable').length} variable / ${sections.filter(s => s.kind === 'static').length} static sections`}
             </Typography>
+            {!!template?.properties?.length && (
+              <Typography variant="caption" color="text.secondary" display="block">
+                Document fields: {template.properties.join(', ')}
+              </Typography>
+            )}
           </Box>
           <Box sx={{ width: { md: 320 } }}>
             <FileDrop label={template ? 'Replace file' : 'Upload template'} accept={['.docx']} onFile={upload} progress={progress} disabled={busy} />
@@ -81,6 +86,12 @@ function TemplateCard({ variant, label, template }: { variant: TemplateVariant; 
           <Alert severity="error" sx={{ mt: 2 }} action={<Button color="inherit" size="small" onClick={() => reparseTemplate(variant).catch(e => setError(e.message))}>Retry</Button>}>
             {template.parseError}
           </Alert>
+        )}
+        {template?.parseStatus === 'parsed' && all.length < TEMPLATE_VARIANTS.length && (
+          <Button size="small" variant="outlined" sx={{ mt: 1.5, mr: 1 }}
+            onClick={() => copyTemplateToEmptyVariants(template, all).catch(e => setError(e.message))}>
+            Use for empty variants
+          </Button>
         )}
         {sections.length > 0 && (
           <>

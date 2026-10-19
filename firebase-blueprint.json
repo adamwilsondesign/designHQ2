@@ -344,6 +344,7 @@
             "On Track",
             "At Risk",
             "Off Track",
+            "Not Started",
             null
           ]
         },
@@ -459,6 +460,17 @@
               }
             }
           }
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Custom document property names found in the template (fill-in fields such as CLIENT, Phase 1 Start Date)."
+        },
+        "copiedFrom": {
+          "type": "string",
+          "description": "Variant this one was copied from with 'Use for empty variants'."
         }
       }
     },
@@ -515,6 +527,10 @@
             "generatedAt": {},
             "generatedBy": {
               "type": "string"
+            },
+            "fields": {
+              "type": "object",
+              "description": "Values for the template's document fields, keyed by property name."
             }
           }
         },
@@ -731,6 +747,30 @@
         },
         "includedScoped": {
           "type": "array"
+        },
+        "snapshot": {
+          "type": "object",
+          "description": "revenue, avgProfitability, pipeline, pacePct at save time; the next update shows changes against it.",
+          "properties": {
+            "revenue": {
+              "type": "number"
+            },
+            "avgProfitability": {
+              "type": "number"
+            },
+            "pipeline": {
+              "type": "number"
+            },
+            "pacePct": {
+              "type": "number"
+            }
+          }
+        },
+        "excludedProjects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

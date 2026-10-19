@@ -30,6 +30,9 @@ export interface ProposalTemplate {
   parseError?: string | null;
   sections?: TemplateSection[];
   preamble?: string;
+  // Custom document property names found in the template (e.g. CLIENT, "Phase 1 Start Date").
+  properties?: string[];
+  copiedFrom?: TemplateVariant;
 }
 
 export interface DraftSection {
@@ -46,7 +49,7 @@ export interface Proposal {
   notes: string;
   transcripts: { path: string; name: string }[];
   status: 'new' | 'draft';
-  draft?: { version: number; sections: DraftSection[]; openQuestions: string[]; generatedAt?: unknown };
+  draft?: { version: number; sections: DraftSection[]; openQuestions: string[]; fields?: Record<string, string>; generatedAt?: unknown };
   reviewNotes?: string;
   sectionNotes?: Record<string, string>;
   history?: { version: number; sections: DraftSection[]; reviewNotes: string }[];

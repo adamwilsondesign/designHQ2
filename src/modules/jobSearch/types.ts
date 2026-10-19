@@ -44,13 +44,12 @@ export interface JobSearchSettings {
   boards: { name: string; url: string }[];
 }
 
-// Weekly goal of five to ten from the spec. Lenny's Jobs has no URL here
-// because it wasn't given; add it in the Boards tab.
+// Weekly goal of five to ten from the spec.
 export const DEFAULT_SETTINGS: JobSearchSettings = {
   weeklyMin: 5,
   weeklyMax: 10,
   boards: [
-    { name: "Lenny's Jobs", url: '' },
+    { name: "Lenny's Jobs", url: 'https://www.lennysjobs.com/' },
     { name: 'LinkedIn Jobs', url: 'https://www.linkedin.com/jobs/' },
   ],
 };
