@@ -7,6 +7,8 @@ import { computeDashboardMetrics, computeMonthOverMonth } from '../../../lib/met
 import { formatUSD } from '../../../lib/utils';
 import { GroupMeetingsDueList, OneOnOneDueList } from '../../meetings/components/DueLists';
 import TodayTasks from './TodayTasks';
+import PersonalMomentum from '../../profile/components/PersonalMomentum';
+import { canAccess } from '../../../lib/roles';
 
 function Direction({ changePct }: { changePct: number | null }) {
   if (changePct === null) return <span>No revenue last month to compare</span>;
@@ -102,6 +104,11 @@ export default function DailyDashboard({
             <TodayTasks uid={userId} />
           </CardContent></Card>
         </Grid>
+        {canAccess(user.role, 'profile') && userId && (
+          <Grid size={12}>
+            <PersonalMomentum uid={userId} onNavigate={onNavigate} />
+          </Grid>
+        )}
       </Grid>
     </Box>
   );
