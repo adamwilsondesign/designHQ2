@@ -117,7 +117,7 @@ function CombinedCalendar() {
       </Stack>
       {error && <ErrorState message={error} onRetry={load} />}
 
-      {!accounts || events === null ? <LoadingState label="Loading calendars…" /> : connected.length === 0 ? (
+      {statusError ? null : !accounts || events === null ? <LoadingState label="Loading calendars…" /> : connected.length === 0 ? (
         <EmptyState title="No calendars connected" description="Connect your Lazer, Polyform and personal Google accounts above to see them side by side." />
       ) : (
         <TableContainer component={Card} variant="outlined">

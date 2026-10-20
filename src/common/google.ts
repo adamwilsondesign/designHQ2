@@ -21,8 +21,11 @@ export function useGoogleAccounts() {
   const [accounts, setAccounts] = useState<GoogleAccountStatus[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const refresh = () =>
-    callFunction<object, { accounts: GoogleAccountStatus[] }>('googleAccountsStatus', {})
-      .then(r => { setAccounts(r.accounts); setError(null); })
+    callFunction<object, { accounts: GoogleAccountStatus[]; configured?: boolean }>('googleAccountsStatus', {})
+      .then(r => {
+        setAccounts(r.accounts);
+        setError(r.configured === false ? 'Google Calendar sign-in is not set up yet. Once the OAuth client is created and the backend redeployed, the Connect buttons will work.' : null);
+      })
       .catch(e => setError(e.message));
   useEffect(() => { refresh(); }, []);
   return { accounts, error, refresh };

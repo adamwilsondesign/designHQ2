@@ -47,6 +47,10 @@ function client() {
   });
 }
 
+// scripts/deploy-backend.sh stores this placeholder when Calendar sign-in
+// hasn't been set up yet.
+const calendarConfigured = () => !!GOOGLE_OAUTH_CLIENT_ID.value() && GOOGLE_OAUTH_CLIENT_ID.value() !== 'not-configured';
+
 function parseAccount(value: unknown): AccountKey {
   if (typeof value === 'string' && (ACCOUNTS as string[]).includes(value)) return value as AccountKey;
   throw new HttpsError('invalid-argument', 'account must be lazer, polyform or personal.');
@@ -75,6 +79,9 @@ const accountDoc = (uid: string, account: AccountKey) => db.doc(`integrations/${
 export const googleAuthUrl = onCall({ secrets: googleSecrets }, async request => {
   const account = parseAccount(request.data?.account);
   const { uid } = await requireRole(request, rolesFor(account));
+  if (!calendarConfigured()) {
+    throw new HttpsError('failed-precondition', 'Google Calendar sign-in is not set up yet. Create the OAuth client and re-run scripts/deploy-backend.sh.');
+  }
   const url = client().generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent select_account',
@@ -111,6 +118,7 @@ export const googleAccountsStatus = onCall(async request => {
   const { uid, role } = await requireRole(request, PROFESSIONAL);
   const snaps = await Promise.all(ACCOUNTS.map(a => accountDoc(uid, a).get()));
   return {
+    configured: calendarConfigured(),
     accounts: ACCOUNTS.filter(a => rolesFor(a).includes(role)).map(a => {
       const s = snaps[ACCOUNTS.indexOf(a)];
       return { account: a, connected: s.exists, email: s.get('email') || null };

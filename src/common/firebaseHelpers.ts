@@ -2,12 +2,19 @@ import { httpsCallable } from 'firebase/functions';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { functions, storage } from '../lib/firebase';
 
+export const BACKEND_MISSING =
+  "This feature runs on DesignHQ's backend (Cloud Functions), which isn't deployed to this Firebase project yet. Once it's deployed, this will work.";
+
 export async function callFunction<Req, Res>(name: string, data: Req): Promise<Res> {
   try {
     const res = await httpsCallable<Req, Res>(functions, name)(data);
     return res.data;
   } catch (err: any) {
-    // Callable errors carry a readable message from HttpsError.
+    // A function that isn't deployed fails the browser's CORS check, which the
+    // SDK reports as a bare "internal" error. Say what's actually wrong.
+    if (err?.code === 'functions/internal' && err?.message === 'internal') throw new Error(BACKEND_MISSING);
+    if (err?.code === 'functions/not-found') throw new Error(BACKEND_MISSING);
+    // Other callable errors carry a readable message from HttpsError.
     throw new Error(err?.message || String(err));
   }
 }
