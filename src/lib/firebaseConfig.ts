@@ -49,7 +49,7 @@ export function resolveFirebaseConfig(): { target: FirebaseTarget; config: Resol
     };
     const missing = (['apiKey', 'authDomain', 'projectId', 'appId'] as const).filter(k => !config[k]);
     if (missing.length > 0) {
-      throw new Error(`VITE_FIREBASE_TARGET=rebuild but these values are missing: ${missing.map(k => `VITE_FIREBASE_${k.replace(/[A-Z]/g, c => '_' + c).toUpperCase()}`).join(', ')}.`);
+      throw new Error(`VITE_FIREBASE_TARGET=rebuild but these values are missing from this build: ${missing.map(k => `VITE_FIREBASE_${k.replace(/[A-Z]/g, c => '_' + c).toUpperCase()}`).join(', ')}. Add them to the hosting environment variables (or .env.local) and rebuild.`);
     }
     if (config.projectId === LEGACY_PROJECT_ID) {
       throw new Error('VITE_FIREBASE_TARGET=rebuild points at the legacy production project. Use a separate Firebase project for the rebuild.');
@@ -57,5 +57,8 @@ export function resolveFirebaseConfig(): { target: FirebaseTarget; config: Resol
     return { target, config };
   }
 
-  throw new Error('VITE_FIREBASE_TARGET is not set. Copy .env.example to .env.local and choose "rebuild" (new project) or "legacy" (production).');
+  throw new Error(
+    'VITE_FIREBASE_TARGET is not set in this build. On Vercel: Project Settings → Environment Variables, add VITE_FIREBASE_TARGET=rebuild ' +
+      'and the other VITE_FIREBASE_* values for this environment (Production and/or Preview), then redeploy. Locally: copy .env.example to .env.local.',
+  );
 }
