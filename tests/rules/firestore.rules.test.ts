@@ -153,6 +153,17 @@ describe('First sign-in (lib/auth.ts flow)', () => {
     await assertSucceeds(deleteDoc(doc(db, 'users', NEWBIE.email)));
   });
 
+  it("Adam's very first sign-in follows lib/auth.ts exactly", async () => {
+    // Empty database apart from other users: no users/{uid} doc for Adam yet.
+    await env.withSecurityRulesDisabled(async ctx => { await deleteDoc(doc(ctx.firestore(), 'users', ADAM.uid)); });
+    const db = as(ADAM).firestore();
+    await assertSucceeds(getDoc(doc(db, 'users', ADAM.uid)));
+    await assertSucceeds(getDoc(doc(db, 'users', ADAM.email)));
+    await assertSucceeds(setDoc(doc(db, 'users', ADAM.uid), { email: ADAM.email, name: 'Adam Wilson', role: 'Super Admin', avatar: 'https://example.com/a.png' }));
+    await assertSucceeds(getDocs(collection(db, 'staff')));
+    await assertSucceeds(getDocs(collection(db, 'sales')));
+  });
+
   it("Adam's account may promote itself to Super Admin", async () => {
     await env.withSecurityRulesDisabled(async ctx => {
       await setDoc(doc(ctx.firestore(), 'users', ADAM.uid), { email: ADAM.email, name: 'Adam', role: 'Regular User', avatar: '' });
