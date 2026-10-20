@@ -11,10 +11,25 @@ import { LEGACY_COLLECTIONS } from './plan';
 
 const EMULATED = import.meta.env.VITE_USE_EMULATORS === 'true';
 
+// 'direct' signs in through the old project's own address
+// (gen-lang-client-….firebaseapp.com). 'proxy' signs in through this site's
+// address instead; vercel.json forwards /__/auth and /__/firebase to the old
+// project, so the browser never contacts the firebaseapp.com domain (useful
+// when a company DNS filter blocks it). Proxy mode needs this site's
+// https://<host>/__/auth/handler as an authorised redirect URI on the old
+// project's OAuth client.
+export type LegacySignInMode = 'direct' | 'proxy';
+let mode: LegacySignInMode = 'direct';
+export const setLegacySignInMode = (m: LegacySignInMode) => { mode = m; };
+
 function legacyApp() {
-  const existing = getApps().find(a => a.name === 'legacy');
+  const name = mode === 'proxy' ? 'legacy-proxy' : 'legacy';
+  const existing = getApps().find(a => a.name === name);
   if (existing) return { app: existing, db: getFirestore(existing, EMULATED ? '(default)' : legacyConfig.firestoreDatabaseId) };
-  const app = initializeApp(EMULATED ? { ...legacyConfig, projectId: 'demo-legacy' } : legacyConfig, 'legacy');
+  const config = EMULATED
+    ? { ...legacyConfig, projectId: 'demo-legacy' }
+    : { ...legacyConfig, ...(mode === 'proxy' ? { authDomain: window.location.host } : {}) };
+  const app = initializeApp(config, name);
   const db: Firestore = EMULATED ? getFirestore(app) : getFirestore(app, legacyConfig.firestoreDatabaseId);
   if (EMULATED) {
     connectAuthEmulator(getAuth(app), 'http://127.0.0.1:9099', { disableWarnings: true });
@@ -25,6 +40,7 @@ function legacyApp() {
 
 export const legacyAuth = () => getAuth(legacyApp().app);
 export const LEGACY_PROJECT_ID = legacyConfig.projectId;
+export const LEGACY_AUTH_DOMAIN = legacyConfig.authDomain;
 
 export async function connectLegacy() {
   const current = legacyAuth().currentUser;

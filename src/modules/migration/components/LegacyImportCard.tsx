@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, LinearProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { connectLegacy, disconnectLegacy, LEGACY_PROJECT_ID, readLegacy } from '../lib/legacyClient';
+import { connectLegacy, disconnectLegacy, LEGACY_AUTH_DOMAIN, LEGACY_PROJECT_ID, LegacySignInMode, readLegacy, setLegacySignInMode } from '../lib/legacyClient';
 import { PlannedWrite, planImport, PlanRow } from '../lib/plan';
 
 type Step = 'idle' | 'connecting' | 'reading' | 'ready' | 'importing' | 'done';
@@ -11,6 +11,9 @@ const explain = (e: unknown) => {
   const msg = e instanceof Error ? e.message : String(e);
   if (msg.includes('unauthorized-domain')) {
     return `The old project doesn't allow sign-in from ${window.location.hostname} yet. In the Firebase console for the OLD project (${LEGACY_PROJECT_ID}), go to Authentication → Settings → Authorized domains and add ${window.location.hostname}, then try again.`;
+  }
+  if (/redirect_uri|invalid_request|400/.test(msg)) {
+    return `Google rejected the sign-in address. For "Connect via this site", add https://${window.location.host}/__/auth/handler as an authorised redirect URI on the old project's OAuth client (see the steps in Admin help).`;
   }
   if (msg.includes('popup')) return 'The sign-in window was blocked or closed. Allow popups for this site and try again.';
   if (/permission|insufficient/i.test(msg)) return `The old database refused to share its data with this account (${msg}). Sign in with the account you use for the old DesignHQ.`;
@@ -27,8 +30,9 @@ export default function LegacyImportCard() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const connectAndPreview = async () => {
+  const connectAndPreview = async (via: LegacySignInMode) => {
     setError(null);
+    setLegacySignInMode(via);
     try {
       setStep('connecting');
       setAccount(await connectLegacy());
@@ -84,11 +88,16 @@ export default function LegacyImportCard() {
 
         {(step === 'idle' || step === 'connecting' || step === 'reading') && (
           <Stack direction="row" spacing={2} alignItems="center">
-            <Button variant="contained" onClick={connectAndPreview} disabled={step !== 'idle'}>
+            <Button variant="contained" onClick={() => connectAndPreview('direct')} disabled={step !== 'idle'}>
               {step === 'idle' ? 'Connect to old DesignHQ' : step === 'connecting' ? 'Signing in…' : 'Reading old data…'}
             </Button>
-            <Typography variant="caption" color="text.secondary">Sign in with the Google account you use for the old DesignHQ.</Typography>
+            <Button onClick={() => connectAndPreview('proxy')} disabled={step !== 'idle'}>Connect via this site</Button>
           </Stack>
+        )}
+        {step === 'idle' && (
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            Sign in with the Google account you use for the old DesignHQ. If your network blocks {LEGACY_AUTH_DOMAIN}, use “Connect via this site”.
+          </Typography>
         )}
 
         {(step === 'ready' || step === 'importing' || step === 'done') && (
