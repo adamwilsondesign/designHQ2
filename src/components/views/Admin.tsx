@@ -30,6 +30,7 @@ import {
   TextField
 } from '@mui/material';
 import { ShieldAlert, Save, UserCog, CheckCircle2, Plus } from 'lucide-react';
+import LegacyImportCard from '../../modules/migration/components/LegacyImportCard';
 
 export default function Admin({ user, staffList = [] }: { user: User, staffList?: StaffMember[] }) {
   const theme = useTheme();
@@ -247,6 +248,8 @@ export default function Admin({ user, staffList = [] }: { user: User, staffList?
           </TableContainer>
         )}
       </Card>
+
+      <LegacyImportCard />
 
       <Box sx={{ mt: 4 }}>
         <Alert severity="info" sx={{ borderRadius: 3 }}>

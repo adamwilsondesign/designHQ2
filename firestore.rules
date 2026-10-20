@@ -93,7 +93,9 @@ service cloud.firestore {
             && userId == request.auth.uid
             && request.resource.data.email == myEmail()
             && allowedSelfRole(request.resource.data.role)
-            && !request.resource.data.keys().hasAny(['staffId']));
+            // A staff link may only come from the user's own invite.
+            && (!request.resource.data.keys().hasAny(['staffId'])
+                || (exists(preCreated()) && request.resource.data.staffId == get(preCreated()).data.get('staffId', null))));
 
       // Users can edit their own name/avatar but never their role or staff link,
       // except Adam's self-promotion to Super Admin that lib/auth.ts performs.

@@ -60,6 +60,10 @@ Google Calendar needs an OAuth client (type "Web application") in the new projec
 
 ## Migration (one-time)
 
+**In the app (recommended):** sign in as the Super Admin, open **Admin → Import from the old DesignHQ**, click **Connect** and sign in with the account you use for the old app, review the counts, then **Import**. It reads the old database only, never overwrites existing records, and can be re-run safely. The new site's domain must be listed under Authorized domains in the OLD Firebase project for that sign-in to work.
+
+**From a terminal (alternative):**
+
 ```bash
 # 1. Export everything from legacy (read-only)
 GOOGLE_APPLICATION_CREDENTIALS=legacy-sa.json npm run migrate:export

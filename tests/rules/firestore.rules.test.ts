@@ -153,6 +153,18 @@ describe('First sign-in (lib/auth.ts flow)', () => {
     await assertSucceeds(deleteDoc(doc(db, 'users', NEWBIE.email)));
   });
 
+  it('an invite can carry a staff link, but nobody can claim one otherwise', async () => {
+    await env.withSecurityRulesDisabled(async ctx => {
+      await setDoc(doc(ctx.firestore(), 'users', NEWBIE.email), { email: NEWBIE.email, name: 'N', role: 'Regular User', avatar: '', staffId: 's2' });
+    });
+    const db = as(NEWBIE).firestore();
+    await assertFails(setDoc(doc(db, 'users', NEWBIE.uid), { email: NEWBIE.email, name: 'N', role: 'Regular User', avatar: '', staffId: 's1' }));
+    await assertSucceeds(setDoc(doc(db, 'users', NEWBIE.uid), { email: NEWBIE.email, name: 'N', role: 'Regular User', avatar: '', staffId: 's2' }));
+
+    const other = { uid: 'other', email: 'other@lazertechnologies.com' };
+    await assertFails(setDoc(doc(as(other).firestore(), 'users', other.uid), { email: other.email, name: 'O', role: 'Regular User', avatar: '', staffId: 's1' }));
+  });
+
   it("Adam's very first sign-in follows lib/auth.ts exactly", async () => {
     // Empty database apart from other users: no users/{uid} doc for Adam yet.
     await env.withSecurityRulesDisabled(async ctx => { await deleteDoc(doc(ctx.firestore(), 'users', ADAM.uid)); });

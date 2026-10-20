@@ -36,12 +36,16 @@ export async function loginWithGoogle(): Promise<User | null> {
         role = preCreatedSnap.data().role as User['role'];
       }
 
+      // An invite can also carry the staff record this person is linked to.
+      const invitedStaffId = preCreatedSnap.exists() ? preCreatedSnap.data().staffId : undefined;
+
       // Create new user profile
       const newUser: User = {
         email: emailLower,
         name: user.displayName || emailLower.split('@')[0],
         role: role,
         avatar: user.photoURL || `https://i.pravatar.cc/150?u=${emailLower}`,
+        ...(invitedStaffId ? { staffId: invitedStaffId } : {}),
       };
       
       await setDoc(userRef, newUser);
