@@ -9,6 +9,7 @@ import { subscribeToAuthChanges } from './lib/auth';
 import { db, handleFirestoreError, OperationType } from './lib/firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocFromServer, query, where } from 'firebase/firestore';
 import { canAccess, isProfessional, ModuleId } from './lib/roles';
+import { explainGoogleError } from './common/google';
 import MyAssignments from './modules/assignments/components/MyAssignments';
 import DailyDashboard from './modules/dashboardHome/components/DailyDashboard';
 import ProposalsView from './modules/proposals/components/ProposalsView';
@@ -43,7 +44,9 @@ export default function App() {
   useEffect(() => {
     if (!googleNotice) return;
     window.history.replaceState(null, '', window.location.pathname);
-    setCurrentView('meetings');
+    let view = 'calendar';
+    try { view = sessionStorage.getItem('dhq_google_return') || 'calendar'; sessionStorage.removeItem('dhq_google_return'); } catch { /* default */ }
+    setCurrentView(view);
   }, [googleNotice]);
   const [loading, setLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -386,7 +389,7 @@ export default function App() {
           <Alert severity={googleNotice.startsWith('connected') ? 'success' : 'error'} sx={{ mx: { xs: 2, md: 3 }, mt: 2 }}>
             {googleNotice.startsWith('connected')
               ? `Google ${googleNotice.split(':')[1]} calendar connected.`
-              : `Google connection failed (${googleNotice.split(':')[1] || 'unknown error'}).`}
+              : `Google connection failed. ${explainGoogleError(googleNotice.split(':')[1] || 'unknown')}`}
           </Alert>
         )}
         <AnimatePresence mode="wait">

@@ -31,9 +31,22 @@ export function useGoogleAccounts() {
   return { accounts, error, refresh };
 }
 
-export async function connectGoogle(account: GoogleAccountKey) {
+// returnView: which page to reopen when Google sends the user back.
+export async function connectGoogle(account: GoogleAccountKey, returnView = 'calendar') {
   const { url } = await callFunction<object, { url: string }>('googleAuthUrl', { account });
+  try { sessionStorage.setItem('dhq_google_return', returnView); } catch { /* falls back to Calendar */ }
   window.location.href = url;
+}
+
+// Plain-language version of the ?google=error:<reason> the OAuth callback sends back.
+export function explainGoogleError(reason: string) {
+  if (reason === 'access_denied') {
+    return "Google didn't grant access. Either the approval was cancelled, or (common for company accounts) a Google Workspace admin blocks unverified apps from Calendar; ask the admin to allow it under Admin console → Security → API controls.";
+  }
+  if (reason === 'admin_policy_enforced') return 'A Google Workspace admin policy blocks this app for that account. Ask the admin to allow it under Admin console → Security → API controls.';
+  if (reason === 'no_refresh_token') return "Google didn't return lasting access. Remove DesignHQ at myaccount.google.com/permissions for that account, then connect again.";
+  if (reason === 'callback_failed') return 'The server could not finish the connection, usually because the OAuth client ID/secret or redirect URI saved on the backend does not match the Google Cloud settings. Re-run scripts/deploy-backend.sh with the values from Google Cloud.';
+  return `Google returned "${reason}".`;
 }
 
 export const disconnectGoogle = (account: GoogleAccountKey) => callFunction('googleDisconnect', { account });

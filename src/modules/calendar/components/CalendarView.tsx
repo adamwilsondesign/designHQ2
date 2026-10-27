@@ -49,6 +49,11 @@ function CombinedCalendar() {
   const [laneErrors, setLaneErrors] = useState<Partial<Record<GoogleAccountKey, string>>>({});
   const [error, setError] = useState<string | null>(null);
   const connected = accounts?.filter(a => a.connected).map(a => a.account) || [];
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const connect = (a: GoogleAccountKey) => {
+    setConnectError(null);
+    connectGoogle(a, 'calendar').catch(e => setConnectError(e instanceof Error ? e.message : String(e)));
+  };
 
   const load = useCallback(async () => {
     if (!connected.length) { setEvents([]); return; }
@@ -86,6 +91,7 @@ function CombinedCalendar() {
   return (
     <Stack spacing={2}>
       {statusError && <ErrorState message={statusError} />}
+      {connectError && <ErrorState message={connectError} />}
       <Grid container spacing={2}>
         {LANES.map(a => {
           const s = accounts?.find(x => x.account === a);
@@ -99,7 +105,7 @@ function CombinedCalendar() {
                   </Box>
                   {s?.connected
                     ? <Button size="small" color="inherit" onClick={() => disconnectGoogle(a).then(refresh)}>Disconnect</Button>
-                    : <Button size="small" variant="outlined" disabled={!accounts} onClick={() => connectGoogle(a)}>Connect</Button>}
+                    : <Button size="small" variant="outlined" disabled={!accounts} onClick={() => connect(a)}>Connect</Button>}
                 </Stack>
               </CardContent></Card>
             </Grid>

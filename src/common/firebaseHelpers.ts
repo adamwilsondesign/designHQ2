@@ -3,7 +3,7 @@ import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { functions, storage } from '../lib/firebase';
 
 export const BACKEND_MISSING =
-  "This feature runs on DesignHQ's backend (Cloud Functions), which isn't deployed to this Firebase project yet. Once it's deployed, this will work.";
+  "Can't reach DesignHQ's backend (Cloud Functions). Either it isn't deployed to this Firebase project yet, or a network filter is blocking cloudfunctions.net / run.app.";
 
 export async function callFunction<Req, Res>(name: string, data: Req): Promise<Res> {
   try {

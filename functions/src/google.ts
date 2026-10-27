@@ -95,7 +95,10 @@ export const googleOAuthCallback = onRequest({ secrets: googleSecrets }, async (
   const back = (status: string) => res.redirect(`${APP_URL.value()}?google=${encodeURIComponent(status)}`);
   try {
     const { uid, account } = verify(String(req.query.state || ''));
-    if (req.query.error) return back(`error:${req.query.error}`);
+    if (req.query.error) {
+      console.warn('Google OAuth returned an error', { account, error: req.query.error });
+      return back(`error:${req.query.error}`);
+    }
     const oauth = client();
     const { tokens } = await oauth.getToken(String(req.query.code || ''));
     if (!tokens.refresh_token) return back('error:no_refresh_token');
